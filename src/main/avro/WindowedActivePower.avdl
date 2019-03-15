@@ -1,0 +1,14 @@
+@namespace("titan.ccp.model.records")
+protocol WindowedActivePower {
+
+  record WindowedActivePowerRecord {
+    string identifier;
+    long timestamp;
+    long count;
+    double mean;
+    double populationVariance;
+    double min;
+    double max;
+  }
+
+}
