@@ -2,6 +2,9 @@ package titan.ccp.stats.streamprocessing;
 
 import java.time.DayOfWeek;
 
+/**
+ * Composed key of a {@link DayOfWeek} and a sensor id.
+ */
 public class DayOfWeekKey {
 
   private final DayOfWeek dayOfWeek;

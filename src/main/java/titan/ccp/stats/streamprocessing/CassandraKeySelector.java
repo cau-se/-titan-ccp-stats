@@ -9,9 +9,6 @@ public class CassandraKeySelector implements PrimaryKeySelectionStrategy {
 
   private final ExplicitPrimaryKeySelectionStrategy keySelectionStrategy;
 
-  private static final Set<String> PARTITION_KEYS = Set.of("identifier");
-  private static final Set<String> CLUSTERING_COLUMNS = Set.of("periodStart", "periodEnd");
-
   public CassandraKeySelector() {
     this.keySelectionStrategy = new ExplicitPrimaryKeySelectionStrategy(new AlwaysFailStrategy());
   }

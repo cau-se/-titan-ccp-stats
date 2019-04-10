@@ -7,6 +7,10 @@ import titan.ccp.common.kafka.simpleserdes.ReadBuffer;
 import titan.ccp.common.kafka.simpleserdes.SimpleSerdes;
 import titan.ccp.common.kafka.simpleserdes.WriteBuffer;
 
+/**
+ * {@link BufferSerde} for a {@link DayOfWeekKey}. Use the {@link #create()} method to create a new
+ * Kafka {@link Serde}.
+ */
 public class DayOfWeekKeySerde implements BufferSerde<DayOfWeekKey> {
 
   @Override
@@ -22,7 +26,7 @@ public class DayOfWeekKeySerde implements BufferSerde<DayOfWeekKey> {
     return new DayOfWeekKey(dayOfWeek, sensorId);
   }
 
-  public static Serde<DayOfWeekKey> serde() {
+  public static Serde<DayOfWeekKey> create() {
     return SimpleSerdes.create(new DayOfWeekKeySerde());
   }
 

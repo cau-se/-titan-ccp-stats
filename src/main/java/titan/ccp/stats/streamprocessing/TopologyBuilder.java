@@ -73,10 +73,9 @@ public class TopologyBuilder {
             statsRecordFactory.create(key, value)))
         // TODO Temp
         .peek((k, v) -> System.out.println(k + ": " + v))
+        // TODO Publish
         // .through("my-topic", Produced.with(serdes.string(), serdes.windowedActivePowerValues()))
         .foreach((k, record) -> this.cassandraWriter.write(record));
-    // TODO Publish
-    // TODO write to Cassandra
   }
 
   public Topology build() {

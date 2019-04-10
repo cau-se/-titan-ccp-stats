@@ -67,14 +67,14 @@ public class KafkaStreamsBuilder {
     final TopologyBuilder topologyBuilder = new TopologyBuilder(this.cassandraSession);
     topologyBuilder.<DayOfWeekKey, DayOfWeekActivePowerRecord>addStat(
         new DayOfWeekKeyFactory(),
-        DayOfWeekKeySerde.serde(),
+        DayOfWeekKeySerde.create(),
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)),
         new DayOfWeekRecordFactory(),
         new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class,
             "dayOfWeek"));
     topologyBuilder.addStat(
         new HourOfDayKeyFactory(),
-        HourOfDayKeySerde.serde(),
+        HourOfDayKeySerde.create(),
         TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1)),
         new HourOfDayRecordFactory(),
         new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"));

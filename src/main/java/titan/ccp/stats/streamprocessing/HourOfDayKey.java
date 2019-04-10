@@ -1,5 +1,8 @@
 package titan.ccp.stats.streamprocessing;
 
+/**
+ * Composed key of an hour of the day and a sensor id.
+ */
 public class HourOfDayKey {
 
   private final int hourOfDay;
