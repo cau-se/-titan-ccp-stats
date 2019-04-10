@@ -49,9 +49,9 @@ public class TopologyBuilder {
   public <K, R extends SpecificRecord> void addStat(
       final StatsKeyFactory<K> keyFactory,
       final Serde<K> keySerde,
-      final TimeWindows timeWindows,
       final StatsRecordFactory<K, R> statsRecordFactory,
-      final RecordDatabaseAdapter<R> recordDatabaseAdapter) {
+      final RecordDatabaseAdapter<R> recordDatabaseAdapter,
+      final TimeWindows timeWindows) {
 
     this.cassandraKeySelector.addRecordDatabaseAdapter(recordDatabaseAdapter);
 

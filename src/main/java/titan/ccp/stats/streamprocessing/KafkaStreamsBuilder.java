@@ -49,8 +49,6 @@ public class KafkaStreamsBuilder {
     return this;
   }
 
-
-
   /**
    * Builds the {@link KafkaStreams} instance.
    */
@@ -65,28 +63,28 @@ public class KafkaStreamsBuilder {
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
     final TopologyBuilder topologyBuilder = new TopologyBuilder(this.cassandraSession);
-    topologyBuilder.<DayOfWeekKey, DayOfWeekActivePowerRecord>addStat(
+    topologyBuilder.addStat(
         new DayOfWeekKeyFactory(),
         DayOfWeekKeySerde.create(),
-        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)),
         new DayOfWeekRecordFactory(),
         new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class,
-            "dayOfWeek"));
+            "dayOfWeek"),
+        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)));
     topologyBuilder.addStat(
         new HourOfDayKeyFactory(),
         HourOfDayKeySerde.create(),
-        TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1)),
         new HourOfDayRecordFactory(),
-        new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"));
+        new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"),
+        TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1)));
     return topologyBuilder.build();
   }
 
   private Properties buildProperties() {
     final Properties properties = new Properties();
+    properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
     properties.put(StreamsConfig.APPLICATION_ID_CONFIG,
         APPLICATION_NAME + '-' + APPLICATION_VERSION); // TODO as parameter
     properties.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, COMMIT_INTERVAL_MS); // TODO as param.
-    properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
     return properties;
   }
 
