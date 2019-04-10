@@ -2,12 +2,12 @@ package titan.ccp.stats.streamprocessing;
 
 import java.time.DayOfWeek;
 
-public class WeekdayKey {
+public class DayOfWeekKey {
 
   private final DayOfWeek dayOfWeek;
   private final String sensorId;
 
-  public WeekdayKey(final DayOfWeek dayOfWeek, final String sensorId) {
+  public DayOfWeekKey(final DayOfWeek dayOfWeek, final String sensorId) {
     this.dayOfWeek = dayOfWeek;
     this.sensorId = sensorId;
   }

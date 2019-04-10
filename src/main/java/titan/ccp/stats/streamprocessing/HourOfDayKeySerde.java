@@ -6,23 +6,23 @@ import titan.ccp.common.kafka.simpleserdes.ReadBuffer;
 import titan.ccp.common.kafka.simpleserdes.SimpleSerdes;
 import titan.ccp.common.kafka.simpleserdes.WriteBuffer;
 
-public class HourKeySerde implements BufferSerde<HourKey> {
+public class HourOfDayKeySerde implements BufferSerde<HourOfDayKey> {
 
   @Override
-  public void serialize(final WriteBuffer buffer, final HourKey data) {
-    buffer.putInt(data.getHour());
+  public void serialize(final WriteBuffer buffer, final HourOfDayKey data) {
+    buffer.putInt(data.getHourOfDay());
     buffer.putString(data.getSensorId());
   }
 
   @Override
-  public HourKey deserialize(final ReadBuffer buffer) {
-    final int hour = buffer.getInt();
+  public HourOfDayKey deserialize(final ReadBuffer buffer) {
+    final int hourOfDay = buffer.getInt();
     final String sensorId = buffer.getString();
-    return new HourKey(hour, sensorId);
+    return new HourOfDayKey(hourOfDay, sensorId);
   }
 
-  public static Serde<HourKey> serde() {
-    return SimpleSerdes.create(new HourKeySerde());
+  public static Serde<HourOfDayKey> serde() {
+    return SimpleSerdes.create(new HourOfDayKeySerde());
   }
 
 }

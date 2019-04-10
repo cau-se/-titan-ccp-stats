@@ -5,13 +5,13 @@ import org.apache.kafka.streams.kstream.Windowed;
 import titan.ccp.model.records.HourOfDayActivePowerRecord;
 
 public class HourOfDayRecordFactory
-    implements StatsRecordFactory<HourKey, HourOfDayActivePowerRecord> {
+    implements StatsRecordFactory<HourOfDayKey, HourOfDayActivePowerRecord> {
 
   @Override
-  public HourOfDayActivePowerRecord create(final Windowed<HourKey> windowed, final Stats stats) {
+  public HourOfDayActivePowerRecord create(final Windowed<HourOfDayKey> windowed, final Stats stats) {
     return new HourOfDayActivePowerRecord(
         windowed.key().getSensorId(),
-        windowed.key().getHour(),
+        windowed.key().getHourOfDay(),
         windowed.window().start(),
         windowed.window().end(),
         stats.count(),

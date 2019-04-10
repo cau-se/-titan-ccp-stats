@@ -65,16 +65,16 @@ public class KafkaStreamsBuilder {
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
     final TopologyBuilder topologyBuilder = new TopologyBuilder(this.cassandraSession);
-    topologyBuilder.<WeekdayKey, DayOfWeekActivePowerRecord>addStat(
-        new WeekdayKeyFactory(),
-        WeekdayKeySerde.serde(),
+    topologyBuilder.<DayOfWeekKey, DayOfWeekActivePowerRecord>addStat(
+        new DayOfWeekKeyFactory(),
+        DayOfWeekKeySerde.serde(),
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)),
         new DayOfWeekRecordFactory(),
         new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class,
             "dayOfWeek"));
     topologyBuilder.addStat(
-        new HourKeyFactory(),
-        HourKeySerde.serde(),
+        new HourOfDayKeyFactory(),
+        HourOfDayKeySerde.serde(),
         TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1)),
         new HourOfDayRecordFactory(),
         new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"));

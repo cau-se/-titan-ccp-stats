@@ -5,10 +5,10 @@ import org.apache.kafka.streams.kstream.Windowed;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 
 public class DayOfWeekRecordFactory
-    implements StatsRecordFactory<WeekdayKey, DayOfWeekActivePowerRecord> {
+    implements StatsRecordFactory<DayOfWeekKey, DayOfWeekActivePowerRecord> {
 
   @Override
-  public DayOfWeekActivePowerRecord create(final Windowed<WeekdayKey> windowed, final Stats stats) {
+  public DayOfWeekActivePowerRecord create(final Windowed<DayOfWeekKey> windowed, final Stats stats) {
     return new DayOfWeekActivePowerRecord(
         windowed.key().getSensorId(),
         windowed.key().getDayOfWeek().getValue(),
