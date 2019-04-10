@@ -2,11 +2,14 @@ package titan.ccp.stats.streamprocessing;
 
 import com.datastax.driver.core.Session;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Properties;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import titan.ccp.model.records.DayOfWeekActivePowerRecord;
+import titan.ccp.model.records.HourOfDayActivePowerRecord;
 
 
 public class KafkaStreamsBuilder {
@@ -59,17 +62,22 @@ public class KafkaStreamsBuilder {
     // Objects.requireNonNull(this.inputTopic, "Input topic has not been set.");
     // Objects.requireNonNull(this.outputTopic, "Output topic has not been set.");
     // Objects.requireNonNull(this.configurationTopic, "Configuration topic has not been set.");
-    // Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
+    Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
-    final TopologyBuilder topologyBuilder = new TopologyBuilder();
-    topologyBuilder.addStat(
+    final TopologyBuilder topologyBuilder = new TopologyBuilder(this.cassandraSession);
+    topologyBuilder.<WeekdayKey, DayOfWeekActivePowerRecord>addStat(
         new WeekdayKeyFactory(),
         WeekdayKeySerde.serde(),
-        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)));
+        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)),
+        new DayOfWeekRecordFactory(),
+        new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class,
+            "dayOfWeek"));
     topologyBuilder.addStat(
         new HourKeyFactory(),
         HourKeySerde.serde(),
-        TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1)));
+        TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1)),
+        new HourOfDayRecordFactory(),
+        new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"));
     return topologyBuilder.build();
   }
 

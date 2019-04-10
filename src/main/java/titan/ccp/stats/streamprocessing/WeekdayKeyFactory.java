@@ -6,9 +6,14 @@ import java.time.LocalDateTime;
 public class WeekdayKeyFactory implements StatsKeyFactory<WeekdayKey> {
 
   @Override
-  public WeekdayKey create(final String sensorId, final LocalDateTime dateTime) {
+  public WeekdayKey createKey(final String sensorId, final LocalDateTime dateTime) {
     final DayOfWeek dayOfWeek = dateTime.getDayOfWeek();
     return new WeekdayKey(dayOfWeek, sensorId);
+  }
+
+  @Override
+  public String getSensorId(final WeekdayKey key) {
+    return key.getSensorId();
   }
 
 }

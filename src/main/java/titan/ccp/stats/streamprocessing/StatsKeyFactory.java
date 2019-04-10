@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 public interface StatsKeyFactory<T> {
 
-  T create(String sensorId, LocalDateTime dateTime);
+  T createKey(String sensorId, LocalDateTime dateTime);
+
+  String getSensorId(T key);
 
 }
