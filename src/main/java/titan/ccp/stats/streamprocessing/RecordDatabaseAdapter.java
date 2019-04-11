@@ -4,7 +4,7 @@ import org.apache.avro.specific.SpecificRecord;
 
 public class RecordDatabaseAdapter<T extends SpecificRecord> {
 
-  private static final String DEFAULT_IDENTIFIER_FIELD = "identifer";
+  private static final String DEFAULT_IDENTIFIER_FIELD = "identifier";
   private static final String DEFAULT_PERIOD_START_FIELD = "periodStart";
   private static final String DEFAULT_PERIOD_END_FIELD = "periodEnd";
 

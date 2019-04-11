@@ -27,7 +27,7 @@ import titan.ccp.stats.streamprocessing.util.StatsFactory;
 public class TopologyBuilder {
 
   private final ZoneId zone = ZoneId.of("Europe/Paris"); // TODO as parameter
-  private final String activePowerTopic = "active-power"; // TODO as parameter
+  private final String activePowerTopic = "input"; // TODO as parameter
   private final Serdes serdes = new Serdes("http://localhost:8081"); // TODO as paramter
 
   private final StreamsBuilder builder = new StreamsBuilder();
@@ -67,6 +67,7 @@ public class TopologyBuilder {
             () -> Stats.of(),
             (k, record, stats) -> StatsFactory.accumulate(stats, record.getValueInW()),
             Materialized.with(keySerde, this.serdes.stats()))
+        // TODO optional: group by timestamp -> reduce to forward only oldest window
         .toStream()
         .map((key, value) -> KeyValue.pair(
             keyFactory.getSensorId(key.key()),
