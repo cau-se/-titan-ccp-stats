@@ -15,6 +15,8 @@ import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import titan.ccp.common.avro.cassandra.AvroDataAdapter;
 import titan.ccp.common.cassandra.CassandraWriter;
 import titan.ccp.common.cassandra.PredefinedTableNameMappers;
@@ -26,17 +28,21 @@ import titan.ccp.stats.streamprocessing.util.StatsFactory;
  */
 public class TopologyBuilder {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(TopologyBuilder.class);
+
   private final ZoneId zone = ZoneId.of("Europe/Paris"); // TODO as parameter
-  private final String activePowerTopic = "input"; // TODO as parameter
-  private final Serdes serdes = new Serdes("http://localhost:8081"); // TODO as paramter
+  private final Serdes serdes = new Serdes("http://localhost:8081"); // TODO as parameter
 
   private final StreamsBuilder builder = new StreamsBuilder();
   private final KStream<String, ActivePowerRecord> recordStream;
   private final CassandraWriter<SpecificRecord> cassandraWriter;
   private final CassandraKeySelector cassandraKeySelector;
 
-  public TopologyBuilder(final Session cassandraSession) {
-    this.recordStream = this.builder.stream(this.activePowerTopic,
+  /**
+   * Create a new {@link TopologyBuilder}.
+   */
+  public TopologyBuilder(final Session cassandraSession, final String inputTopic) {
+    this.recordStream = this.builder.stream(inputTopic,
         Consumed.with(this.serdes.string(), this.serdes.activePower()));
 
     this.cassandraKeySelector = new CassandraKeySelector();
@@ -46,6 +52,9 @@ public class TopologyBuilder {
         .build();
   }
 
+  /**
+   * Add a new statistics calculation step.
+   */
   public <K, R extends SpecificRecord> void addStat(
       final StatsKeyFactory<K> keyFactory,
       final Serde<K> keySerde,
@@ -72,8 +81,7 @@ public class TopologyBuilder {
         .map((key, value) -> KeyValue.pair(
             keyFactory.getSensorId(key.key()),
             statsRecordFactory.create(key, value)))
-        // TODO Temp
-        .peek((k, v) -> System.out.println(k + ": " + v))
+        .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
         // TODO Publish
         // .through("my-topic", Produced.with(serdes.string(), serdes.windowedActivePowerValues()))
         .foreach((k, record) -> this.cassandraWriter.write(record));
