@@ -11,6 +11,7 @@ import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
 public class StatsService {
 
   private static final String KAFKA_BOOTSTRAP_SERVERS = "localhost:9092";
+  private static final String KAFKA_INPUT_TOPIC = "input";
   private static final String CASSANDRA_HOST = "localhost";
   private static final int CASSANDRA_PORT = 9042;
   private static final String CASSANDRA_KEYSPACE = "titanccp";
@@ -28,6 +29,7 @@ public class StatsService {
     final KafkaStreams kafkaStreams = new KafkaStreamsBuilder()
         .cassandraSession(clusterSession.getSession())
         .bootstrapServers(KAFKA_BOOTSTRAP_SERVERS)
+        .inputTopic(KAFKA_INPUT_TOPIC)
         .build();
     kafkaStreams.start();
   }

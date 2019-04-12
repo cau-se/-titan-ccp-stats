@@ -1,7 +1,6 @@
 package titan.ccp.stats.streamprocessing;
 
 import java.util.List;
-import java.util.Set;
 import titan.ccp.common.cassandra.ExplicitPrimaryKeySelectionStrategy;
 import titan.ccp.common.cassandra.PrimaryKeySelectionStrategy;
 
@@ -24,22 +23,23 @@ public class CassandraKeySelector implements PrimaryKeySelectionStrategy {
    */
   public void addRecordDatabaseAdapter(final RecordDatabaseAdapter<?> adapter) {
     final String className = adapter.getClazz().getSimpleName();
-    this.keySelectionStrategy.registerPartitionKeys(className, adapter.getIdentifierField());
+    this.keySelectionStrategy.registerPartitionKeys(className, adapter.getIdentifierField(),
+        adapter.getPeriodStartField(),
+        adapter.getPeriodEndField());
     this.keySelectionStrategy.registerClusteringColumns(
         className,
-        adapter.getPeriodStartField(),
-        adapter.getPeriodEndField(),
+
         adapter.getTimeUnitField());
   }
 
   @Override
-  public Set<String> selectPartitionKeys(final String tableName,
+  public List<String> selectPartitionKeys(final String tableName,
       final List<String> possibleColumns) {
     return this.keySelectionStrategy.selectPartitionKeys(tableName, possibleColumns);
   }
 
   @Override
-  public Set<String> selectClusteringColumns(final String tableName,
+  public List<String> selectClusteringColumns(final String tableName,
       final List<String> possibleColumns) {
     return this.keySelectionStrategy.selectClusteringColumns(tableName, possibleColumns);
   }
@@ -47,14 +47,14 @@ public class CassandraKeySelector implements PrimaryKeySelectionStrategy {
   private static class AlwaysFailStrategy implements PrimaryKeySelectionStrategy {
 
     @Override
-    public Set<String> selectPartitionKeys(final String tableName,
+    public List<String> selectPartitionKeys(final String tableName,
         final List<String> possibleColumns) {
       throw new IllegalArgumentException(
           "Partition keys for " + tableName + " are not registered."); // NOCS
     }
 
     @Override
-    public Set<String> selectClusteringColumns(final String tableName,
+    public List<String> selectClusteringColumns(final String tableName,
         final List<String> possibleColumns) {
       throw new IllegalArgumentException(
           "Clustering columns for " + tableName + " are not registered."); // NOCS
