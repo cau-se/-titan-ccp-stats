@@ -23,7 +23,7 @@ public final class HourOfDayMapping {
 
   private static HourOfDayActivePowerRecord map(final Row row) {
     return new HourOfDayActivePowerRecord(
-        row.get(TableRecordMapping.DEFAULT_IDENTIFIER_COLUMN, TypeCodec.ascii()),
+        row.get(TableRecordMapping.DEFAULT_IDENTIFIER_COLUMN, TypeCodec.varchar()),
         row.get(HOUR_OF_DAY_COLUMN, TypeCodec.cint()),
         row.get(TableRecordMapping.DEFAULT_PERIOD_START_COLUMN, TypeCodec.bigint()),
         row.get(TableRecordMapping.DEFAULT_PERIOD_END_COLUMN, TypeCodec.bigint()),

@@ -23,7 +23,7 @@ public final class DayOfWeekMapping {
 
   private static DayOfWeekActivePowerRecord map(final Row row) {
     return new DayOfWeekActivePowerRecord(
-        row.get(TableRecordMapping.DEFAULT_IDENTIFIER_COLUMN, TypeCodec.ascii()),
+        row.get(TableRecordMapping.DEFAULT_IDENTIFIER_COLUMN, TypeCodec.varchar()),
         row.get(DAY_OF_WEEK_COLUMN, TypeCodec.cint()),
         row.get(TableRecordMapping.DEFAULT_PERIOD_START_COLUMN, TypeCodec.bigint()),
         row.get(TableRecordMapping.DEFAULT_PERIOD_END_COLUMN, TypeCodec.bigint()),
