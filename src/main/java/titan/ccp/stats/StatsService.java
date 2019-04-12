@@ -3,6 +3,7 @@ package titan.ccp.stats;
 import org.apache.kafka.streams.KafkaStreams;
 import titan.ccp.common.cassandra.SessionBuilder;
 import titan.ccp.common.cassandra.SessionBuilder.ClusterSession;
+import titan.ccp.stats.api.RestApiServer;
 import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
 
 /**
@@ -32,6 +33,9 @@ public class StatsService {
         .inputTopic(KAFKA_INPUT_TOPIC)
         .build();
     kafkaStreams.start();
+
+    final RestApiServer apiServer = new RestApiServer(clusterSession.getSession(), 8090, true);
+    apiServer.start();
   }
 
   public static void main(final String[] args) {
