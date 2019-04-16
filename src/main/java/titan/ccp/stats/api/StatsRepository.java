@@ -5,8 +5,12 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.avro.specific.SpecificRecord;
 import titan.ccp.stats.api.util.Interval;
@@ -18,12 +22,13 @@ import titan.ccp.stats.api.util.Interval;
  */
 public class StatsRepository<T extends SpecificRecord> {
 
+  private static final Duration WINDOW_UPDATE_RATE = Duration.ofHours(1);
+
+  private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
   private final Session cassandraSession;
   private final TableRecordMapping<T> mapping;
 
-
-  private Interval currentInterval;
-
+  private volatile Interval currentInterval;
 
   /**
    * Create a new {@link StatsRepository}.
@@ -32,15 +37,20 @@ public class StatsRepository<T extends SpecificRecord> {
     this.cassandraSession = cassandraSession;
     this.mapping = mapping;
 
-
-    this.updateCurrentInterval();
+    this.executor.scheduleAtFixedRate(
+        this::updateCurrentInterval,
+        0, // Call immediately the first time
+        WINDOW_UPDATE_RATE.toMillis(),
+        TimeUnit.MILLISECONDS);
+    // this.updateCurrentInterval();
   }
 
   /**
    * Returns the most recent statistics for a given sensor identifier.
    */
   public List<T> get(final String identifier) {
-    if (this.currentInterval == null) {
+    final Interval currentInterval = this.currentInterval;
+    if (currentInterval == null) {
       return List.of();
     }
 
@@ -50,10 +60,10 @@ public class StatsRepository<T extends SpecificRecord> {
         .where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
         .and(QueryBuilder.eq(
             this.mapping.getPeriodStartColumn(),
-            this.currentInterval.getStart().toEpochMilli()))
+            currentInterval.getStart().toEpochMilli()))
         .and(QueryBuilder.eq(
             this.mapping.getPeriodEndColumn(),
-            this.currentInterval.getEnd().toEpochMilli()));
+            currentInterval.getEnd().toEpochMilli()));
 
     final ResultSet resultSet = this.cassandraSession.execute(statement); // NOPMD no close()
 
@@ -83,7 +93,7 @@ public class StatsRepository<T extends SpecificRecord> {
         .sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
         .filter(interval -> !interval.getEnd().isBefore(now))
         .findFirst()
-        .orElse(null);
+        .orElse(this.currentInterval);
   }
 
 }

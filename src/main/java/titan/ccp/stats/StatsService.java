@@ -16,6 +16,8 @@ public class StatsService {
   private static final String CASSANDRA_HOST = "localhost";
   private static final int CASSANDRA_PORT = 9042;
   private static final String CASSANDRA_KEYSPACE = "titanccp";
+  private static final int WEBSERVER_PORT = 8090;
+  private static final boolean WEBSERVER_CORS = true;
 
   /**
    * Start the microservice.
@@ -34,7 +36,10 @@ public class StatsService {
         .build();
     kafkaStreams.start();
 
-    final RestApiServer apiServer = new RestApiServer(clusterSession.getSession(), 8090, true);
+    final RestApiServer apiServer = new RestApiServer(
+        clusterSession.getSession(),
+        WEBSERVER_PORT,
+        WEBSERVER_CORS);
     apiServer.start();
   }
 
