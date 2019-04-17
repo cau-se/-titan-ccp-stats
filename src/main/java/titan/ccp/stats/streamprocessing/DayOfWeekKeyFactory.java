@@ -3,6 +3,9 @@ package titan.ccp.stats.streamprocessing;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 
+/**
+ * {@link StatsKeyFactory} for {@link DayOfWeekKey}.
+ */
 public class DayOfWeekKeyFactory implements StatsKeyFactory<DayOfWeekKey> {
 
   @Override

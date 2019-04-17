@@ -4,11 +4,15 @@ import com.google.common.math.Stats;
 import org.apache.kafka.streams.kstream.Windowed;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 
+/**
+ * {@link StatsRecordFactory} to create an {@link DayOfWeekActivePowerRecord}.
+ */
 public class DayOfWeekRecordFactory
     implements StatsRecordFactory<DayOfWeekKey, DayOfWeekActivePowerRecord> {
 
   @Override
-  public DayOfWeekActivePowerRecord create(final Windowed<DayOfWeekKey> windowed, final Stats stats) {
+  public DayOfWeekActivePowerRecord create(final Windowed<DayOfWeekKey> windowed,
+      final Stats stats) {
     return new DayOfWeekActivePowerRecord(
         windowed.key().getSensorId(),
         windowed.key().getDayOfWeek().getValue(),

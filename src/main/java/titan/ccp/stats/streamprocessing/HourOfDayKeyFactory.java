@@ -2,6 +2,9 @@ package titan.ccp.stats.streamprocessing;
 
 import java.time.LocalDateTime;
 
+/**
+ * {@link StatsKeyFactory} for {@link HourOfDayKey}.
+ */
 public class HourOfDayKeyFactory implements StatsKeyFactory<HourOfDayKey> {
 
   @Override
