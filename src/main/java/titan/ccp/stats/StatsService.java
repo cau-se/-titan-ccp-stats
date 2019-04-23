@@ -1,8 +1,10 @@
 package titan.ccp.stats;
 
+import org.apache.commons.configuration2.Configuration;
 import org.apache.kafka.streams.KafkaStreams;
 import titan.ccp.common.cassandra.SessionBuilder;
 import titan.ccp.common.cassandra.SessionBuilder.ClusterSession;
+import titan.ccp.common.configuration.Configurations;
 import titan.ccp.stats.api.RestApiServer;
 import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
 
@@ -11,35 +13,29 @@ import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
  */
 public class StatsService {
 
-  private static final String KAFKA_BOOTSTRAP_SERVERS = "localhost:9092";
-  private static final String KAFKA_INPUT_TOPIC = "input";
-  private static final String CASSANDRA_HOST = "localhost";
-  private static final int CASSANDRA_PORT = 9042;
-  private static final String CASSANDRA_KEYSPACE = "titanccp";
-  private static final int WEBSERVER_PORT = 8090;
-  private static final boolean WEBSERVER_CORS = true;
+  private final Configuration config = Configurations.create();
 
   /**
    * Start the microservice.
    */
   public void run() {
     final ClusterSession clusterSession = new SessionBuilder()
-        .contactPoint(CASSANDRA_HOST)
-        .port(CASSANDRA_PORT)
-        .keyspace(CASSANDRA_KEYSPACE)
+        .contactPoint(this.config.getString(ConfigurationKeys.CASSANDRA_HOST))
+        .port(this.config.getInt(ConfigurationKeys.CASSANDRA_PORT))
+        .keyspace(this.config.getString(ConfigurationKeys.CASSANDRA_KEYSPACE))
         .build();
 
     final KafkaStreams kafkaStreams = new KafkaStreamsBuilder()
         .cassandraSession(clusterSession.getSession())
-        .bootstrapServers(KAFKA_BOOTSTRAP_SERVERS)
-        .inputTopic(KAFKA_INPUT_TOPIC)
+        .bootstrapServers(this.config.getString(ConfigurationKeys.KAFKA_BOOTSTRAP_SERVERS))
+        .inputTopic(this.config.getString(ConfigurationKeys.KAFKA_INPUT_TOPIC))
         .build();
     kafkaStreams.start();
 
     final RestApiServer apiServer = new RestApiServer(
         clusterSession.getSession(),
-        WEBSERVER_PORT,
-        WEBSERVER_CORS);
+        this.config.getInt(ConfigurationKeys.WEBSERVER_PORT),
+        this.config.getBoolean(ConfigurationKeys.WEBSERVER_CORS));
     apiServer.start();
   }
 
