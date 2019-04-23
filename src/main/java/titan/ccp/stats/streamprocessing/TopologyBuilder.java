@@ -15,8 +15,6 @@ import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import titan.ccp.common.avro.cassandra.AvroDataAdapter;
 import titan.ccp.common.cassandra.CassandraWriter;
 import titan.ccp.common.cassandra.PredefinedTableNameMappers;
@@ -28,7 +26,7 @@ import titan.ccp.stats.streamprocessing.util.StatsFactory;
  */
 public class TopologyBuilder {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TopologyBuilder.class);
+  // private static final Logger LOGGER = LoggerFactory.getLogger(TopologyBuilder.class);
 
   private final ZoneId zone = ZoneId.of("Europe/Paris"); // TODO as parameter
   private final Serdes serdes = new Serdes("http://localhost:8081"); // TODO as parameter
@@ -81,7 +79,7 @@ public class TopologyBuilder {
         .map((key, value) -> KeyValue.pair(
             keyFactory.getSensorId(key.key()),
             statsRecordFactory.create(key, value)))
-        .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
+        // .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
         // TODO Publish
         // .through("my-topic", Produced.with(serdes.string(), serdes.windowedActivePowerValues()))
         .foreach((k, record) -> this.cassandraWriter.write(record));
