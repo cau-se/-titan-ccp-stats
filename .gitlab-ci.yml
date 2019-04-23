@@ -57,7 +57,7 @@ spotbugs:
     - dockerex
   script: ./gradlew spotbugs
 
-.deploy: # Will not be executed yet
+deploy:
   stage: deploy
   tags:
     - dockerex
