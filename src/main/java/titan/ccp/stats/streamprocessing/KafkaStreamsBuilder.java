@@ -22,7 +22,8 @@ public class KafkaStreamsBuilder {
   private static final int COMMIT_INTERVAL_MS = 1000;
 
   private String bootstrapServers; // NOPMD
-  private String inputTopic; // NOPMD
+  private String activePowerTopic; // NOPMD
+  private String aggrActivePowerTopic; // NOPMD
   private Session cassandraSession; // NOPMD
 
   public KafkaStreamsBuilder bootstrapServers(final String bootstrapServers) {
@@ -35,8 +36,13 @@ public class KafkaStreamsBuilder {
     return this;
   }
 
-  public KafkaStreamsBuilder inputTopic(final String inputTopic) {
-    this.inputTopic = inputTopic;
+  public KafkaStreamsBuilder activePowerTopic(final String activePowerTopic) {
+    this.activePowerTopic = activePowerTopic;
+    return this;
+  }
+
+  public KafkaStreamsBuilder aggrActivePowerTopic(final String aggrActivePowerTopic) {
+    this.aggrActivePowerTopic = aggrActivePowerTopic;
     return this;
   }
 
@@ -48,11 +54,16 @@ public class KafkaStreamsBuilder {
   }
 
   private Topology buildTopology() {
-    Objects.requireNonNull(this.inputTopic, "Input topic has not been set.");
+    Objects.requireNonNull(this.activePowerTopic,
+        "Kafka topic for active power records has not been set.");
+    Objects.requireNonNull(this.aggrActivePowerTopic,
+        "Kafka topic for aggregated active power records has not been set.");
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
-    final TopologyBuilder topologyBuilder =
-        new TopologyBuilder(this.cassandraSession, this.inputTopic);
+    final TopologyBuilder topologyBuilder = new TopologyBuilder(
+        this.cassandraSession,
+        this.activePowerTopic,
+        this.aggrActivePowerTopic);
     topologyBuilder.addStat(
         new DayOfWeekKeyFactory(),
         DayOfWeekKeySerde.create(),

@@ -19,9 +19,9 @@ public final class ConfigurationKeys {
 
   public static final String KAFKA_BOOTSTRAP_SERVERS = "kafka.bootstrap.servers";
 
-  public static final String KAFKA_OUTPUT_TOPIC = "kafka.output.topic";
+  public static final String KAFKA_TOPIC_ACTIVE_POWER = "kafka.topic.activepower";
 
-  public static final String KAFKA_INPUT_TOPIC = "kafka.input.topic";
+  public static final String KAFKA_TOPIC_AGGR_ACTIVE_POWER = "kafka.topic.aggractivepower";
 
   private ConfigurationKeys() {}
 

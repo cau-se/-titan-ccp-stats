@@ -28,7 +28,9 @@ public class StatsService {
     final KafkaStreams kafkaStreams = new KafkaStreamsBuilder()
         .cassandraSession(clusterSession.getSession())
         .bootstrapServers(this.config.getString(ConfigurationKeys.KAFKA_BOOTSTRAP_SERVERS))
-        .inputTopic(this.config.getString(ConfigurationKeys.KAFKA_INPUT_TOPIC))
+        .activePowerTopic(this.config.getString(ConfigurationKeys.KAFKA_TOPIC_ACTIVE_POWER))
+        .aggrActivePowerTopic(
+            this.config.getString(ConfigurationKeys.KAFKA_TOPIC_AGGR_ACTIVE_POWER))
         .build();
     kafkaStreams.start();
 

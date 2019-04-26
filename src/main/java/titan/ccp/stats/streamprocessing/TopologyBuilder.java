@@ -39,15 +39,18 @@ public class TopologyBuilder {
   /**
    * Create a new {@link TopologyBuilder}.
    */
-  public TopologyBuilder(final Session cassandraSession, final String inputTopic) {
-    this.recordStream = this.builder.stream(inputTopic,
-        Consumed.with(this.serdes.string(), this.serdes.activePower()));
+  public TopologyBuilder(
+      final Session cassandraSession,
+      final String activePowerTopic,
+      final String aggregatedActivePowerTopic) {
 
     this.cassandraKeySelector = new CassandraKeySelector();
     this.cassandraWriter = CassandraWriter.builder(cassandraSession, new AvroDataAdapter())
         .tableNameMapper(PredefinedTableNameMappers.SIMPLE_CLASS_NAME)
         .primaryKeySelectionStrategy(this.cassandraKeySelector)
         .build();
+
+    this.recordStream = this.buildRecordStream(activePowerTopic, aggregatedActivePowerTopic);
   }
 
   /**
@@ -87,6 +90,18 @@ public class TopologyBuilder {
 
   public Topology build() {
     return this.builder.build();
+  }
+
+  private KStream<String, ActivePowerRecord> buildRecordStream(final String activePowerTopic,
+      final String aggrActivePowerTopic) {
+    final KStream<String, ActivePowerRecord> activePowerStream = this.builder
+        .stream(activePowerTopic, Consumed.with(this.serdes.string(), this.serdes.activePower()));
+    final KStream<String, ActivePowerRecord> aggrActivePowerStream = this.builder.stream(
+        aggrActivePowerTopic,
+        Consumed.with(this.serdes.string(), this.serdes.aggrActivePower()))
+        .mapValues(aggr -> new ActivePowerRecord(aggr.getIdentifier(), aggr.getTimestamp(),
+            aggr.getSumInW()));
+    return activePowerStream.merge(aggrActivePowerStream);
   }
 
 }
