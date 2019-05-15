@@ -60,17 +60,23 @@ public class StatsRepository<T extends SpecificRecord> {
     if (currentInterval == null) {
       return List.of();
     }
+    return this.get(identifier, currentInterval);
+  }
 
+  /**
+   * Returns the statistics for a given sensor identifier and interval.
+   */
+  public List<T> get(final String identifier, final Interval interval) {
     final Statement statement = QueryBuilder // NOPMD no close()
         .select().all()
         .from(this.mapping.getTableName())
         .where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
         .and(QueryBuilder.eq(
             this.mapping.getPeriodStartColumn(),
-            currentInterval.getStart().toEpochMilli()))
+            interval.getStart().toEpochMilli()))
         .and(QueryBuilder.eq(
             this.mapping.getPeriodEndColumn(),
-            currentInterval.getEnd().toEpochMilli()));
+            interval.getEnd().toEpochMilli()));
 
     return this.executeQuery(statement).stream()
         .map(this.mapping.getMapper())

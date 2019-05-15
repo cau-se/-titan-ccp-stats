@@ -3,11 +3,13 @@ package titan.ccp.stats.api;
 import com.datastax.driver.core.Session;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Service;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 import titan.ccp.model.records.HourOfDayActivePowerRecord;
+import titan.ccp.stats.api.util.Interval;
 
 
 /**
@@ -73,12 +75,30 @@ public class RestApiServer {
 
     this.webService.get("/:sensorId/day-of-week", (request, response) -> {
       final String sensorId = request.params("sensorId"); // NOCS
-      return this.dayOfWeekRepository.get(sensorId);
+      final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
+      final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
+      if (intervalStartParam == null || intervalEndParam == null) {
+        return this.dayOfWeekRepository.get(sensorId);
+      } else {
+        final Interval interval = Interval.of(
+            Instant.parse(intervalStartParam),
+            Instant.parse(intervalEndParam));
+        return this.dayOfWeekRepository.get(sensorId, interval);
+      }
     }, this.gson::toJson);
 
     this.webService.get("/:sensorId/hour-of-day", (request, response) -> {
       final String sensorId = request.params("sensorId"); // NOCS
-      return this.hourOfDayRepository.get(sensorId);
+      final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
+      final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
+      if (intervalStartParam == null || intervalEndParam == null) {
+        return this.hourOfDayRepository.get(sensorId);
+      } else {
+        final Interval interval = Interval.of(
+            Instant.parse(intervalStartParam),
+            Instant.parse(intervalEndParam));
+        return this.hourOfDayRepository.get(sensorId, interval);
+      }
     }, this.gson::toJson);
 
     this.webService.after((request, response) -> {
