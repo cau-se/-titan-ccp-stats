@@ -10,7 +10,7 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 import titan.ccp.model.records.HourOfDayActivePowerRecord;
-
+import titan.ccp.model.records.HourOfWeekActivePowerRecord;
 
 /**
  * Builder for the statistics {@link KafkaStreams} configuration.
@@ -117,6 +117,12 @@ public class KafkaStreamsBuilder {
         new HourOfDayRecordFactory(),
         new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"),
         TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1))); // NOCS
+    topologyBuilder.addStat(
+        new HourOfWeekKeyFactory(),
+        HourOfWeekKeySerde.create(),
+        new HourOfWeekRecordFactory(),
+        new RecordDatabaseAdapter<>(HourOfWeekActivePowerRecord.class, "hourOfWeek"),
+        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
     return topologyBuilder.build();
   }
 
