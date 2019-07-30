@@ -28,8 +28,7 @@ public class CassandraKeySelector implements PrimaryKeySelectionStrategy {
         adapter.getPeriodEndField());
     this.keySelectionStrategy.registerClusteringColumns(
         className,
-
-        adapter.getTimeUnitField());
+        adapter.getTimeUnitFields());
   }
 
   @Override

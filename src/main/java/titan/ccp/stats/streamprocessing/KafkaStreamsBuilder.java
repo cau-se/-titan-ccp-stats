@@ -2,6 +2,7 @@ package titan.ccp.stats.streamprocessing;
 
 import com.datastax.driver.core.Session;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import org.apache.kafka.streams.KafkaStreams;
@@ -108,20 +109,20 @@ public class KafkaStreamsBuilder {
         new DayOfWeekKeyFactory(),
         DayOfWeekKeySerde.create(),
         new DayOfWeekRecordFactory(),
-        new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class,
-            "dayOfWeek"),
+        new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class, "dayOfWeek"), // NOCS
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
     topologyBuilder.addStat(
         new HourOfDayKeyFactory(),
         HourOfDayKeySerde.create(),
         new HourOfDayRecordFactory(),
-        new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"),
+        new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"), // NOCS
         TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1))); // NOCS
     topologyBuilder.addStat(
         new HourOfWeekKeyFactory(),
         HourOfWeekKeySerde.create(),
         new HourOfWeekRecordFactory(),
-        new RecordDatabaseAdapter<>(HourOfWeekActivePowerRecord.class, "hourOfWeek"),
+        new RecordDatabaseAdapter<>(HourOfWeekActivePowerRecord.class,
+            List.of("dayOfWeek", "hourOfDay")), // NOCS
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
     return topologyBuilder.build();
   }

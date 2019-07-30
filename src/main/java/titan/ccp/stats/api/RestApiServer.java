@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import spark.Service;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 import titan.ccp.model.records.HourOfDayActivePowerRecord;
+import titan.ccp.model.records.HourOfWeekActivePowerRecord;
 import titan.ccp.stats.api.util.Interval;
 
 
@@ -23,6 +24,7 @@ public class RestApiServer {
   private final Gson gson = new GsonBuilder().create();
   private final StatsRepository<DayOfWeekActivePowerRecord> dayOfWeekRepository;
   private final StatsRepository<HourOfDayActivePowerRecord> hourOfDayRepository;
+  private final StatsRepository<HourOfWeekActivePowerRecord> hourOfWeekRepository;
   private final Service webService;
   private final boolean enableCors; // NOPMD
 
@@ -32,6 +34,7 @@ public class RestApiServer {
   public RestApiServer(final Session cassandraSession, final int port, final boolean enableCors) {
     this.dayOfWeekRepository = new StatsRepository<>(cassandraSession, DayOfWeekMapping.create());
     this.hourOfDayRepository = new StatsRepository<>(cassandraSession, HourOfDayMapping.create());
+    this.hourOfWeekRepository = new StatsRepository<>(cassandraSession, HourOfWeekMapping.create());
     LOGGER.info("Instantiate API server.");
     this.webService = Service.ignite().port(port);
     this.enableCors = enableCors;
@@ -98,6 +101,20 @@ public class RestApiServer {
             Instant.parse(intervalStartParam),
             Instant.parse(intervalEndParam));
         return this.hourOfDayRepository.get(sensorId, interval);
+      }
+    }, this.gson::toJson);
+
+    this.webService.get("/:sensorId/hour-of-week", (request, response) -> {
+      final String sensorId = request.params("sensorId"); // NOCS
+      final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
+      final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
+      if (intervalStartParam == null || intervalEndParam == null) {
+        return this.hourOfWeekRepository.get(sensorId);
+      } else {
+        final Interval interval = Interval.of(
+            Instant.parse(intervalStartParam),
+            Instant.parse(intervalEndParam));
+        return this.hourOfWeekRepository.get(sensorId, interval);
       }
     }, this.gson::toJson);
 
