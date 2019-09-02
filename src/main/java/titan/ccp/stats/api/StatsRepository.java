@@ -49,7 +49,8 @@ public class StatsRepository<T extends SpecificRecord> {
 	}
 
 	/**
-	 * Returns the most recent statistics for a given sensor identifier.
+	 * Returns the most recent statistics for a given sensor identifier and a
+	 * specified interval. If the interval is null, the current interval is used.
 	 */
 	public List<T> get(final String identifier, final Interval interval) {
 		// Copy ref to interval for concurrent modification
@@ -65,6 +66,14 @@ public class StatsRepository<T extends SpecificRecord> {
 				.and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(), currentInterval.getEnd().toEpochMilli()));
 
 		return this.executeQuery(statement).stream().map(this.mapping.getMapper()).collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns the most recent statistics for a given sensor identifier and a
+	 * specified interval.
+	 */
+	public List<T> get(final String identifier) {
+		return this.get(identifier, null);
 	}
 
 	public List<Interval> getIntervals() {

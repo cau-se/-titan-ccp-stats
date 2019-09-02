@@ -71,28 +71,28 @@ public class RestApiServer {
 	private void instantiateRoutes() {
 		LOGGER.info("Instantiate API routes.");
 
-		this.webService.get("/:sensorId/day-of-week", (request, response) -> {
+		this.webService.get("/sensor/:sensorId/day-of-week", (request, response) -> {
 			final String sensorId = request.params("sensorId"); // NOCS
 			return this.dayOfWeekRepository.get(sensorId, null);
 		}, this.gson::toJson);
 
-		this.webService.get("/:sensorId/hour-of-day", (request, response) -> {
+		this.webService.get("/sensor/:sensorId/hour-of-day", (request, response) -> {
 			final String sensorId = request.params("sensorId"); // NOCS
 
 			try {
-				final Instant start = Instant.ofEpochMilli(Long.parseLong(request.queryParamOrDefault("from", null)));
-				final Instant stop = Instant.ofEpochMilli(Long.parseLong(request.queryParamOrDefault("to", null)));
-				return this.hourOfDayRepository.get(sensorId, Interval.of(start, stop));
+				final Instant start = Instant.ofEpochMilli(Long.parseLong(request.queryParamOrDefault("start", null)));
+				final Instant end = Instant.ofEpochMilli(Long.parseLong(request.queryParamOrDefault("end", null)));
+				return this.hourOfDayRepository.get(sensorId, Interval.of(start, end));
 			} catch (final NumberFormatException e) {
-				return this.hourOfDayRepository.get(sensorId, null);
+				return this.hourOfDayRepository.get(sensorId);
 			}
 		}, this.gson::toJson);
 
-		this.webService.get("/interval/get-hour-of-day", (request, response) -> {
+		this.webService.get("/interval/hour-of-day", (request, response) -> {
 			return this.hourOfDayRepository.getIntervals();
 		}, this.gson::toJson);
 
-		this.webService.get("/interval/get-day-of-week", (request, response) -> {
+		this.webService.get("/interval/day-of-week", (request, response) -> {
 			return this.dayOfWeekRepository.getIntervals();
 		}, this.gson::toJson);
 
