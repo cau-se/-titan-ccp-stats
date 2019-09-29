@@ -10,7 +10,9 @@ import spark.Service;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 import titan.ccp.model.records.HourOfDayActivePowerRecord;
 import titan.ccp.model.records.HourOfWeekActivePowerRecord;
+import titan.ccp.stats.api.util.InstantSerializer;
 import titan.ccp.stats.api.util.Interval;
+import titan.ccp.stats.api.util.IntervalSerializer;
 
 /**
  * Contains a web server for accessing the stats via a REST interface.
@@ -20,7 +22,8 @@ public class RestApiServer {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RestApiServer.class);
 
-	private final Gson gson = new GsonBuilder().create();
+	private final Gson gson = new GsonBuilder().registerTypeAdapter(Interval.class, new IntervalSerializer())
+			.registerTypeAdapter(Instant.class, new InstantSerializer()).create();
 	private final StatsRepository<DayOfWeekActivePowerRecord> dayOfWeekRepository;
 	private final StatsRepository<HourOfDayActivePowerRecord> hourOfDayRepository;
 	private final StatsRepository<HourOfWeekActivePowerRecord> hourOfWeekRepository;
@@ -81,10 +84,8 @@ public class RestApiServer {
 			if (intervalStartParam == null || intervalEndParam == null) {
 				return this.dayOfWeekRepository.get(sensorId);
 			} else {
-				final Interval interval = Interval.of(Instant.ofEpochMilli(Long.parseLong(intervalStartParam)),
-						Instant.ofEpochMilli(Long.parseLong(intervalEndParam)));
-				// final Interval interval = Interval.of(Instant.parse(intervalStartParam),
-				// Instant.parse(intervalEndParam));
+				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+						Instant.parse(intervalEndParam));
 				return this.dayOfWeekRepository.get(sensorId, interval);
 			}
 		}, this.gson::toJson);
@@ -96,10 +97,8 @@ public class RestApiServer {
 			if (intervalStartParam == null || intervalEndParam == null) {
 				return this.hourOfDayRepository.get(sensorId);
 			} else {
-				final Interval interval = Interval.of(Instant.ofEpochMilli(Long.parseLong(intervalStartParam)),
-						Instant.ofEpochMilli(Long.parseLong(intervalEndParam)));
-				// final Interval interval = Interval.of(Instant.parse(intervalStartParam),
-				// Instant.parse(intervalEndParam));
+				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+						Instant.parse(intervalEndParam));
 				return this.hourOfDayRepository.get(sensorId, interval);
 			}
 		}, this.gson::toJson);
@@ -111,10 +110,8 @@ public class RestApiServer {
 			if (intervalStartParam == null || intervalEndParam == null) {
 				return this.hourOfWeekRepository.get(sensorId);
 			} else {
-				final Interval interval = Interval.of(Instant.ofEpochMilli(Long.parseLong(intervalStartParam)),
-						Instant.ofEpochMilli(Long.parseLong(intervalEndParam)));
-				// final Interval interval = Interval.of(Instant.parse(intervalStartParam),
-				// Instant.parse(intervalEndParam));
+				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+						Instant.parse(intervalEndParam));
 				return this.hourOfWeekRepository.get(sensorId, interval);
 			}
 		}, this.gson::toJson);
