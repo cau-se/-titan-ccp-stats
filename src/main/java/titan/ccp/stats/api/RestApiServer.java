@@ -8,8 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Service;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
-import titan.ccp.model.records.HourOfDayActivePowerRecord;
+import titan.ccp.model.records.HourOfDayActivePowerRecord;<<<<<<<HEAD
+import titan.ccp.stats.api.util.Interval;=======
+import titan.ccp.model.records.HourOfWeekActivePowerRecord;
 import titan.ccp.stats.api.util.Interval;
+
+>>>>>>>refs/remotes/upstream/master
 
 /**
  * Contains a web server for accessing the stats via a REST interface.
@@ -19,11 +23,22 @@ public class RestApiServer {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RestApiServer.class);
 
+	<<<<<<<HEAD
 	private final Gson gson = new GsonBuilder().create();
 	private final StatsRepository<DayOfWeekActivePowerRecord> dayOfWeekRepository;
 	private final StatsRepository<HourOfDayActivePowerRecord> hourOfDayRepository;
 	private final Service webService;
 	private final boolean enableCors; // NOPMD
+	=======
+	private final Gson gson = new GsonBuilder().create();
+	private final StatsRepository<DayOfWeekActivePowerRecord> dayOfWeekRepository;
+	private final StatsRepository<HourOfDayActivePowerRecord> hourOfDayRepository;
+	private final StatsRepository<HourOfWeekActivePowerRecord> hourOfWeekRepository;
+	private final Service webService;
+	private final boolean enableCors; // NOPMD
+	>>>>>>>refs/remotes/upstream/master
+
+	<<<<<<<HEAD
 
 	/**
 	 * Creates a new API server using the passed parameters.
@@ -34,7 +49,19 @@ public class RestApiServer {
 		LOGGER.info("Instantiate API server.");
 		this.webService = Service.ignite().port(port);
 		this.enableCors = enableCors;
-	}
+	}=======
+
+	/**
+   * Creates a new API server using the passed parameters.
+   */
+  public RestApiServer(final Session cassandraSession, final int port, final boolean enableCors) {
+    this.dayOfWeekRepository = new StatsRepository<>(cassandraSession, DayOfWeekMapping.create());
+    this.hourOfDayRepository = new StatsRepository<>(cassandraSession, HourOfDayMapping.create());
+    this.hourOfWeekRepository = new StatsRepository<>(cassandraSession, HourOfWeekMapping.create());
+    LOGGER.info("Instantiate API server.");
+    this.webService = Service.ignite().port(port);
+    this.enableCors = enableCors;
+  }>>>>>>>refs/remotes/upstream/master
 
 	/**
 	 * Start the web server by setting up the API routes.
@@ -73,18 +100,40 @@ public class RestApiServer {
 
 		this.webService.get("/sensor/:sensorId/day-of-week", (request, response) -> {
 			final String sensorId = request.params("sensorId"); // NOCS
-			return this.dayOfWeekRepository.get(sensorId, null);
+			final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
+			final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
+			if (intervalStartParam == null || intervalEndParam == null) {
+				return this.dayOfWeekRepository.get(sensorId);
+			} else {
+				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+						Instant.parse(intervalEndParam));
+				return this.dayOfWeekRepository.get(sensorId, interval);
+			}
 		}, this.gson::toJson);
 
-		this.webService.get("/sensor/:sensorId/hour-of-day", (request, response) -> {
+		this.webService.get("/:sensorId/hour-of-day", (request, response) -> {
 			final String sensorId = request.params("sensorId"); // NOCS
-
-			try {
-				final Instant start = Instant.ofEpochMilli(Long.parseLong(request.queryParamOrDefault("start", null)));
-				final Instant end = Instant.ofEpochMilli(Long.parseLong(request.queryParamOrDefault("end", null)));
-				return this.hourOfDayRepository.get(sensorId, Interval.of(start, end));
-			} catch (final NumberFormatException e) {
+			final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
+			final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
+			if (intervalStartParam == null || intervalEndParam == null) {
 				return this.hourOfDayRepository.get(sensorId);
+			} else {
+				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+						Instant.parse(intervalEndParam));
+				return this.hourOfDayRepository.get(sensorId, interval);
+			}
+		}, this.gson::toJson);
+
+		this.webService.get("/:sensorId/hour-of-week", (request, response) -> {
+			final String sensorId = request.params("sensorId"); // NOCS
+			final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
+			final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
+			if (intervalStartParam == null || intervalEndParam == null) {
+				return this.hourOfWeekRepository.get(sensorId);
+			} else {
+				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+						Instant.parse(intervalEndParam));
+				return this.hourOfWeekRepository.get(sensorId, interval);
 			}
 		}, this.gson::toJson);
 

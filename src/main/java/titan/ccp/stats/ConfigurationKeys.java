@@ -11,6 +11,8 @@ public final class ConfigurationKeys {
 
   public static final String CASSANDRA_KEYSPACE = "cassandra.keyspace";
 
+  public static final String CASSANDRA_INIT_TIMEOUT_MS = "cassandra.init.timeout.ms";
+
   public static final String WEBSERVER_ENABLE = "webserver.enable";
 
   public static final String WEBSERVER_PORT = "webserver.port";
@@ -22,6 +24,12 @@ public final class ConfigurationKeys {
   public static final String KAFKA_TOPIC_ACTIVE_POWER = "kafka.topic.activepower";
 
   public static final String KAFKA_TOPIC_AGGR_ACTIVE_POWER = "kafka.topic.aggractivepower";
+
+  public static final String NUM_THREADS = "num.threads";
+
+  public static final String COMMIT_INTERVAL_MS = "commit.interval.ms";
+
+  public static final String CACHE_MAX_BYTES_BUFFERING = "cache.max.bytes.buffering";
 
   private ConfigurationKeys() {}
 

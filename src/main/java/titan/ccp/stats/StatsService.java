@@ -23,6 +23,7 @@ public class StatsService {
         .contactPoint(this.config.getString(ConfigurationKeys.CASSANDRA_HOST))
         .port(this.config.getInt(ConfigurationKeys.CASSANDRA_PORT))
         .keyspace(this.config.getString(ConfigurationKeys.CASSANDRA_KEYSPACE))
+        .timeoutInMillis(this.config.getInt(ConfigurationKeys.CASSANDRA_INIT_TIMEOUT_MS))
         .build();
 
     final KafkaStreams kafkaStreams = new KafkaStreamsBuilder()

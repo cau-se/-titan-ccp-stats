@@ -49,31 +49,28 @@ public class StatsRepository<T extends SpecificRecord> {
 	}
 
 	/**
-	 * Returns the most recent statistics for a given sensor identifier and a
-	 * specified interval. If the interval is null, the current interval is used.
+	 * Returns the most recent statistics for a given sensor identifier.
 	 */
-	public List<T> get(final String identifier, final Interval interval) {
+	public List<T> get(final String identifier) {
 		// Copy ref to interval for concurrent modification
-		final Interval currentInterval = interval != null ? interval : this.currentInterval;
+		final Interval currentInterval = this.currentInterval;
 		if (currentInterval == null) {
 			return List.of();
 		}
-
-		final Statement statement = QueryBuilder // NOPMD no close()
-				.select().all().from(this.mapping.getTableName())
-				.where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
-				.and(QueryBuilder.eq(this.mapping.getPeriodStartColumn(), currentInterval.getStart().toEpochMilli()))
-				.and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(), currentInterval.getEnd().toEpochMilli()));
-
-		return this.executeQuery(statement).stream().map(this.mapping.getMapper()).collect(Collectors.toList());
+		return this.get(identifier, currentInterval);
 	}
 
 	/**
-	 * Returns the most recent statistics for a given sensor identifier and a
-	 * specified interval.
+	 * Returns the statistics for a given sensor identifier and interval.
 	 */
-	public List<T> get(final String identifier) {
-		return this.get(identifier, null);
+	public List<T> get(final String identifier, final Interval interval) {
+		final Statement statement = QueryBuilder // NOPMD no close()
+				.select().all().from(this.mapping.getTableName())
+				.where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
+				.and(QueryBuilder.eq(this.mapping.getPeriodStartColumn(), interval.getStart().toEpochMilli()))
+				.and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(), interval.getEnd().toEpochMilli()));
+
+		return this.executeQuery(statement).stream().map(this.mapping.getMapper()).collect(Collectors.toList());
 	}
 
 	public List<Interval> getIntervals() {
