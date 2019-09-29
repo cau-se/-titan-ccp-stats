@@ -81,44 +81,54 @@ public class RestApiServer {
 			if (intervalStartParam == null || intervalEndParam == null) {
 				return this.dayOfWeekRepository.get(sensorId);
 			} else {
-				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
-						Instant.parse(intervalEndParam));
+				final Interval interval = Interval.of(Instant.ofEpochMilli(Long.parseLong(intervalStartParam)),
+						Instant.ofEpochMilli(Long.parseLong(intervalEndParam)));
+				// final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+				// Instant.parse(intervalEndParam));
 				return this.dayOfWeekRepository.get(sensorId, interval);
 			}
 		}, this.gson::toJson);
 
-		this.webService.get("/:sensorId/hour-of-day", (request, response) -> {
+		this.webService.get("/sensor/:sensorId/hour-of-day", (request, response) -> {
 			final String sensorId = request.params("sensorId"); // NOCS
 			final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
 			final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
 			if (intervalStartParam == null || intervalEndParam == null) {
 				return this.hourOfDayRepository.get(sensorId);
 			} else {
-				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
-						Instant.parse(intervalEndParam));
+				final Interval interval = Interval.of(Instant.ofEpochMilli(Long.parseLong(intervalStartParam)),
+						Instant.ofEpochMilli(Long.parseLong(intervalEndParam)));
+				// final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+				// Instant.parse(intervalEndParam));
 				return this.hourOfDayRepository.get(sensorId, interval);
 			}
 		}, this.gson::toJson);
 
-		this.webService.get("/:sensorId/hour-of-week", (request, response) -> {
+		this.webService.get("/sensor/:sensorId/hour-of-week", (request, response) -> {
 			final String sensorId = request.params("sensorId"); // NOCS
 			final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
 			final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
 			if (intervalStartParam == null || intervalEndParam == null) {
 				return this.hourOfWeekRepository.get(sensorId);
 			} else {
-				final Interval interval = Interval.of(Instant.parse(intervalStartParam),
-						Instant.parse(intervalEndParam));
+				final Interval interval = Interval.of(Instant.ofEpochMilli(Long.parseLong(intervalStartParam)),
+						Instant.ofEpochMilli(Long.parseLong(intervalEndParam)));
+				// final Interval interval = Interval.of(Instant.parse(intervalStartParam),
+				// Instant.parse(intervalEndParam));
 				return this.hourOfWeekRepository.get(sensorId, interval);
 			}
+		}, this.gson::toJson);
+
+		this.webService.get("/interval/day-of-week", (request, response) -> {
+			return this.dayOfWeekRepository.getIntervals();
 		}, this.gson::toJson);
 
 		this.webService.get("/interval/hour-of-day", (request, response) -> {
 			return this.hourOfDayRepository.getIntervals();
 		}, this.gson::toJson);
 
-		this.webService.get("/interval/day-of-week", (request, response) -> {
-			return this.dayOfWeekRepository.getIntervals();
+		this.webService.get("/interval/hour-of-week", (request, response) -> {
+			return this.hourOfWeekRepository.getIntervals();
 		}, this.gson::toJson);
 
 		this.webService.after((request, response) -> {
