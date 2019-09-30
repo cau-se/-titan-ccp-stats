@@ -26,99 +26,111 @@ import titan.ccp.stats.api.util.Interval;
  */
 public class StatsRepository<T extends SpecificRecord> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(StatsRepository.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StatsRepository.class);
 
-	private static final Duration WINDOW_UPDATE_RATE = Duration.ofHours(1);
-	private static final Duration WINDOW_UPDATE_RETRY_DELAY = Duration.ofSeconds(5);
+  private static final Duration WINDOW_UPDATE_RATE = Duration.ofHours(1);
+  private static final Duration WINDOW_UPDATE_RETRY_DELAY = Duration.ofSeconds(5);
 
-	private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-	private final Session cassandraSession;
-	private final TableRecordMapping<T> mapping;
+  private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+  private final Session cassandraSession;
+  private final TableRecordMapping<T> mapping;
 
-	private volatile Interval currentInterval;
+  private volatile Interval currentInterval;
 
-	/**
-	 * Create a new {@link StatsRepository}.
-	 */
-	public StatsRepository(final Session cassandraSession, final TableRecordMapping<T> mapping) {
-		this.cassandraSession = cassandraSession;
-		this.mapping = mapping;
+  /**
+   * Create a new {@link StatsRepository}.
+   */
+  public StatsRepository(final Session cassandraSession, final TableRecordMapping<T> mapping) {
+    this.cassandraSession = cassandraSession;
+    this.mapping = mapping;
 
-		this.executor.scheduleAtFixedRate(this::updateCurrentInterval, 0, // Call immediately the first time
-				WINDOW_UPDATE_RATE.toMillis(), TimeUnit.MILLISECONDS);
-	}
+    this.executor.scheduleAtFixedRate(
+        this::updateCurrentInterval, 0, // Call immediately the first time
+        WINDOW_UPDATE_RATE.toMillis(), TimeUnit.MILLISECONDS);
+  }
 
-	/**
-	 * Returns the most recent statistics for a given sensor identifier.
-	 */
-	public List<T> get(final String identifier) {
-		// Copy ref to interval for concurrent modification
-		final Interval currentInterval = this.currentInterval;
-		if (currentInterval == null) {
-			return List.of();
-		}
-		return this.get(identifier, currentInterval);
-	}
+  /**
+   * Returns the most recent statistics for a given sensor identifier.
+   */
+  public List<T> get(final String identifier) {
+    // Copy ref to interval for concurrent modification
+    final Interval currentInterval = this.currentInterval;
+    if (currentInterval == null) {
+      return List.of();
+    }
+    return this.get(identifier, currentInterval);
+  }
 
-	/**
-	 * Returns the statistics for a given sensor identifier and interval.
-	 */
-	public List<T> get(final String identifier, final Interval interval) {
-		final Statement statement = QueryBuilder // NOPMD no close()
-				.select().all().from(this.mapping.getTableName())
-				.where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
-				.and(QueryBuilder.eq(this.mapping.getPeriodStartColumn(), interval.getStart().toEpochMilli()))
-				.and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(), interval.getEnd().toEpochMilli()));
+  /**
+   * Returns the statistics for a given sensor identifier and interval.
+   */
+  public List<T> get(final String identifier, final Interval interval) {
+    final Statement statement = QueryBuilder // NOPMD no close()
+        .select().all().from(this.mapping.getTableName())
+        .where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
+        .and(QueryBuilder.eq(this.mapping.getPeriodStartColumn(),
+            interval.getStart().toEpochMilli()))
+        .and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(), interval.getEnd().toEpochMilli()));
 
-		return this.executeQuery(statement).stream().map(this.mapping.getMapper()).collect(Collectors.toList());
-	}
+    return this.executeQuery(statement).stream().map(this.mapping.getMapper())
+        .collect(Collectors.toList());
+  }
 
-	public List<Interval> getIntervals() {
-		final Statement statement = QueryBuilder
-				.select(this.mapping.getPeriodStartColumn(), this.mapping.getPeriodEndColumn())
-				.from(this.mapping.getTableName());
+  /**
+   * Get all intervals of the repository.
+   * 
+   * @return the list of intervals
+   */
+  public List<Interval> getIntervals() {
+    final Statement statement = QueryBuilder
+        .select(this.mapping.getPeriodStartColumn(), this.mapping.getPeriodEndColumn())
+        .from(this.mapping.getTableName());
 
-		return this.executeQuery(statement).stream()
-				.map(record -> Interval.of(
-						Instant.ofEpochMilli(record.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
-						Instant.ofEpochMilli(record.get(this.mapping.getPeriodEndColumn(), TypeCodec.bigint()))))
-				.distinct().sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd())).collect(Collectors.toList());
-	}
+    return this.executeQuery(statement).stream()
+        .map(record -> Interval.of(
+            Instant
+                .ofEpochMilli(record.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
+            Instant
+                .ofEpochMilli(record.get(this.mapping.getPeriodEndColumn(), TypeCodec.bigint()))))
+        .distinct().sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
+        .collect(Collectors.toList());
+  }
 
-	private void updateCurrentInterval() {
-		final Instant now = Instant.now();
-		LOGGER.info("Updating the current interval.");
+  private void updateCurrentInterval() {
+    final Instant now = Instant.now();
+    LOGGER.info("Updating the current interval.");
 
-		final Statement statement = QueryBuilder // NOPMD no close()
-				.select(this.mapping.getIdentifierColumn(), this.mapping.getPeriodStartColumn(),
-						this.mapping.getPeriodEndColumn())
-				.distinct().from(this.mapping.getTableName());
+    final Statement statement = QueryBuilder // NOPMD no close()
+        .select(this.mapping.getIdentifierColumn(), this.mapping.getPeriodStartColumn(),
+            this.mapping.getPeriodEndColumn())
+        .distinct().from(this.mapping.getTableName());
 
-		this.currentInterval = this.executeQuery(statement).stream()
-				.map(row -> Interval.of(
-						Instant.ofEpochMilli(row.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
-						Instant.ofEpochMilli(row.get(this.mapping.getPeriodEndColumn(), TypeCodec.bigint()))))
-				.distinct().sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
-				.filter(interval -> !interval.getEnd().isBefore(now)).findFirst().orElse(this.currentInterval);
+    this.currentInterval = this.executeQuery(statement).stream()
+        .map(row -> Interval.of(
+            Instant.ofEpochMilli(row.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
+            Instant.ofEpochMilli(row.get(this.mapping.getPeriodEndColumn(), TypeCodec.bigint()))))
+        .distinct().sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
+        .filter(interval -> !interval.getEnd().isBefore(now)).findFirst()
+        .orElse(this.currentInterval);
 
-		if (this.currentInterval == null) {
-			final long retryDelyinMs = WINDOW_UPDATE_RETRY_DELAY.toMillis();
-			LOGGER.warn("No interval found so far. Retry in {} ms.", retryDelyinMs);
-			this.executor.schedule(this::updateCurrentInterval, retryDelyinMs, TimeUnit.MILLISECONDS);
-		}
-	}
+    if (this.currentInterval == null) {
+      final long retryDelyinMs = WINDOW_UPDATE_RETRY_DELAY.toMillis();
+      LOGGER.warn("No interval found so far. Retry in {} ms.", retryDelyinMs);
+      this.executor.schedule(this::updateCurrentInterval, retryDelyinMs, TimeUnit.MILLISECONDS);
+    }
+  }
 
-	/**
-	 * Execute the given Cassandra statement and returns a list of all rows or an
-	 * empty list if this query failed.
-	 */
-	private List<Row> executeQuery(final Statement statement) {
-		try {
-			final ResultSet resultSet = this.cassandraSession.execute(statement); // NOPMD no close()
-			return resultSet.all();
-		} catch (final InvalidQueryException e) {
-			LOGGER.error("Cassandra query could not be executed.", e);
-			return List.of();
-		}
-	}
+  /**
+   * Execute the given Cassandra statement and returns a list of all rows or an empty list if this
+   * query failed.
+   */
+  private List<Row> executeQuery(final Statement statement) {
+    try {
+      final ResultSet resultSet = this.cassandraSession.execute(statement); // NOPMD no close()
+      return resultSet.all();
+    } catch (final InvalidQueryException e) {
+      LOGGER.error("Cassandra query could not be executed.", e);
+      return List.of();
+    }
+  }
 }

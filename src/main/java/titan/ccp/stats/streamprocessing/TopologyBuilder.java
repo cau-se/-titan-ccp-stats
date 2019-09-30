@@ -26,70 +26,76 @@ import titan.ccp.stats.streamprocessing.util.StatsFactory;
  */
 public class TopologyBuilder {
 
-	// private static final Logger LOGGER =
-	// LoggerFactory.getLogger(TopologyBuilder.class);
+  // private static final Logger LOGGER =
+  // LoggerFactory.getLogger(TopologyBuilder.class);
 
-	private final ZoneId zone = ZoneId.of("Europe/Paris"); // TODO as parameter
-	private final Serdes serdes = new Serdes("http://localhost:8081"); // TODO as parameter
+  private final ZoneId zone = ZoneId.of("Europe/Paris"); // TODO as parameter
+  private final Serdes serdes = new Serdes("http://localhost:8081"); // TODO as parameter
 
-	private final StreamsBuilder builder = new StreamsBuilder();
-	private final KStream<String, ActivePowerRecord> recordStream;
-	private final CassandraWriter<SpecificRecord> cassandraWriter;
-	private final CassandraKeySelector cassandraKeySelector;
+  private final StreamsBuilder builder = new StreamsBuilder();
+  private final KStream<String, ActivePowerRecord> recordStream;
+  private final CassandraWriter<SpecificRecord> cassandraWriter;
+  private final CassandraKeySelector cassandraKeySelector;
 
-	/**
-	 * Create a new {@link TopologyBuilder}.
-	 */
-	public TopologyBuilder(final Session cassandraSession, final String activePowerTopic,
-			final String aggregatedActivePowerTopic) {
+  /**
+   * Create a new {@link TopologyBuilder}.
+   */
+  public TopologyBuilder(final Session cassandraSession, final String activePowerTopic,
+      final String aggregatedActivePowerTopic) {
 
-		this.cassandraKeySelector = new CassandraKeySelector();
-		this.cassandraWriter = CassandraWriter.builder(cassandraSession, new AvroDataAdapter())
-				.tableNameMapper(PredefinedTableNameMappers.SIMPLE_CLASS_NAME)
-				.primaryKeySelectionStrategy(this.cassandraKeySelector).build();
+    this.cassandraKeySelector = new CassandraKeySelector();
+    this.cassandraWriter = CassandraWriter.builder(cassandraSession, new AvroDataAdapter())
+        .tableNameMapper(PredefinedTableNameMappers.SIMPLE_CLASS_NAME)
+        .primaryKeySelectionStrategy(this.cassandraKeySelector).build();
 
-		this.recordStream = this.buildRecordStream(activePowerTopic, aggregatedActivePowerTopic);
-	}
+    this.recordStream = this.buildRecordStream(activePowerTopic, aggregatedActivePowerTopic);
+  }
 
-	/**
-	 * Add a new statistics calculation step.
-	 */
-	public <K, R extends SpecificRecord> void addStat(final StatsKeyFactory<K> keyFactory, final Serde<K> keySerde,
-			final StatsRecordFactory<K, R> statsRecordFactory, final RecordDatabaseAdapter<R> recordDatabaseAdapter,
-			final TimeWindows timeWindows) {
+  /**
+   * Add a new statistics calculation step.
+   */
+  public <K, R extends SpecificRecord> void addStat(final StatsKeyFactory<K> keyFactory,
+      final Serde<K> keySerde,
+      final StatsRecordFactory<K, R> statsRecordFactory,
+      final RecordDatabaseAdapter<R> recordDatabaseAdapter,
+      final TimeWindows timeWindows) {
 
-		this.cassandraKeySelector.addRecordDatabaseAdapter(recordDatabaseAdapter);
+    this.cassandraKeySelector.addRecordDatabaseAdapter(recordDatabaseAdapter);
 
-		this.recordStream.selectKey((key, value) -> {
-			final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
-			final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
-			return keyFactory.createKey(value.getIdentifier(), dateTime);
-		}).groupByKey(Grouped.with(keySerde, this.serdes.activePower())).windowedBy(timeWindows)
-				.aggregate(() -> Stats.of(), (k, record, stats) -> StatsFactory.accumulate(stats, record.getValueInW()),
-						Materialized.with(keySerde, this.serdes.stats()))
-				// TODO optional: group by timestamp -> reduce to forward only oldest window
-				.toStream()
-				.map((key, value) -> KeyValue.pair(keyFactory.getSensorId(key.key()),
-						statsRecordFactory.create(key, value)))
-				// .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
-				// TODO Publish
-				// .through("my-topic", Produced.with(serdes.string(),
-				// serdes.windowedActivePowerValues()))
-				.foreach((k, record) -> this.cassandraWriter.write(record));
-	}
+    this.recordStream.selectKey((key, value) -> {
+      final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
+      final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
+      return keyFactory.createKey(value.getIdentifier(), dateTime);
+    }).groupByKey(Grouped.with(keySerde, this.serdes.activePower())).windowedBy(timeWindows)
+        .aggregate(() -> Stats.of(),
+            (k, record, stats) -> StatsFactory.accumulate(stats, record.getValueInW()),
+            Materialized.with(keySerde, this.serdes.stats()))
+        // TODO optional: group by timestamp -> reduce to forward only oldest window
+        .toStream()
+        .map((key, value) -> KeyValue.pair(keyFactory.getSensorId(key.key()),
+            statsRecordFactory.create(key, value)))
+        // .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
+        // TODO Publish
+        // .through("my-topic", Produced.with(serdes.string(),
+        // serdes.windowedActivePowerValues()))
+        .foreach((k, record) -> this.cassandraWriter.write(record));
+  }
 
-	public Topology build() {
-		return this.builder.build();
-	}
+  public Topology build() {
+    return this.builder.build();
+  }
 
-	private KStream<String, ActivePowerRecord> buildRecordStream(final String activePowerTopic,
-			final String aggrActivePowerTopic) {
-		final KStream<String, ActivePowerRecord> activePowerStream = this.builder.stream(activePowerTopic,
-				Consumed.with(this.serdes.string(), this.serdes.activePower()));
-		final KStream<String, ActivePowerRecord> aggrActivePowerStream = this.builder
-				.stream(aggrActivePowerTopic, Consumed.with(this.serdes.string(), this.serdes.aggrActivePower()))
-				.mapValues(aggr -> new ActivePowerRecord(aggr.getIdentifier(), aggr.getTimestamp(), aggr.getSumInW()));
-		return activePowerStream.merge(aggrActivePowerStream);
-	}
+  private KStream<String, ActivePowerRecord> buildRecordStream(final String activePowerTopic,
+      final String aggrActivePowerTopic) {
+    final KStream<String, ActivePowerRecord> activePowerStream =
+        this.builder.stream(activePowerTopic,
+            Consumed.with(this.serdes.string(), this.serdes.activePower()));
+    final KStream<String, ActivePowerRecord> aggrActivePowerStream = this.builder
+        .stream(aggrActivePowerTopic,
+            Consumed.with(this.serdes.string(), this.serdes.aggrActivePower()))
+        .mapValues(aggr -> new ActivePowerRecord(aggr.getIdentifier(), aggr.getTimestamp(),
+            aggr.getSumInW()));
+    return activePowerStream.merge(aggrActivePowerStream);
+  }
 
 }
