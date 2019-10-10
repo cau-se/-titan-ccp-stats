@@ -102,17 +102,25 @@ public class KafkaStreamsBuilder {
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
     final TopologyBuilder topologyBuilder =
-        new TopologyBuilder(this.cassandraSession, this.activePowerTopic,
+        new TopologyBuilder(
+            this.cassandraSession,
+            this.activePowerTopic,
             this.aggrActivePowerTopic);
-    topologyBuilder.addStat(new DayOfWeekKeyFactory(), DayOfWeekKeySerde.create(),
+    topologyBuilder.addStat(
+        new DayOfWeekKeyFactory(),
+        DayOfWeekKeySerde.create(),
         new DayOfWeekRecordFactory(),
         new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class, "dayOfWeek"), // NOCS
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
-    topologyBuilder.addStat(new HourOfDayKeyFactory(), HourOfDayKeySerde.create(),
+    topologyBuilder.addStat(
+        new HourOfDayKeyFactory(),
+        HourOfDayKeySerde.create(),
         new HourOfDayRecordFactory(),
         new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"), // NOCS
         TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1))); // NOCS
-    topologyBuilder.addStat(new HourOfWeekKeyFactory(), HourOfWeekKeySerde.create(),
+    topologyBuilder.addStat(
+        new HourOfWeekKeyFactory(),
+        HourOfWeekKeySerde.create(),
         new HourOfWeekRecordFactory(),
         new RecordDatabaseAdapter<>(HourOfWeekActivePowerRecord.class,
             List.of("dayOfWeek", "hourOfDay")), // NOCS

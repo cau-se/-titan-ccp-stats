@@ -40,13 +40,16 @@ public class TopologyBuilder {
   /**
    * Create a new {@link TopologyBuilder}.
    */
-  public TopologyBuilder(final Session cassandraSession, final String activePowerTopic,
+  public TopologyBuilder(
+      final Session cassandraSession,
+      final String activePowerTopic,
       final String aggregatedActivePowerTopic) {
 
     this.cassandraKeySelector = new CassandraKeySelector();
     this.cassandraWriter = CassandraWriter.builder(cassandraSession, new AvroDataAdapter())
         .tableNameMapper(PredefinedTableNameMappers.SIMPLE_CLASS_NAME)
-        .primaryKeySelectionStrategy(this.cassandraKeySelector).build();
+        .primaryKeySelectionStrategy(this.cassandraKeySelector)
+        .build();
 
     this.recordStream = this.buildRecordStream(activePowerTopic, aggregatedActivePowerTopic);
   }
@@ -62,17 +65,20 @@ public class TopologyBuilder {
 
     this.cassandraKeySelector.addRecordDatabaseAdapter(recordDatabaseAdapter);
 
-    this.recordStream.selectKey((key, value) -> {
-      final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
-      final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
-      return keyFactory.createKey(value.getIdentifier(), dateTime);
-    }).groupByKey(Grouped.with(keySerde, this.serdes.activePower())).windowedBy(timeWindows)
+    this.recordStream
+        .selectKey((key, value) -> {
+          final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
+          final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
+          return keyFactory.createKey(value.getIdentifier(), dateTime);
+        }).groupByKey(Grouped.with(keySerde, this.serdes.activePower()))
+        .windowedBy(timeWindows)
         .aggregate(() -> Stats.of(),
             (k, record, stats) -> StatsFactory.accumulate(stats, record.getValueInW()),
             Materialized.with(keySerde, this.serdes.stats()))
         // TODO optional: group by timestamp -> reduce to forward only oldest window
         .toStream()
-        .map((key, value) -> KeyValue.pair(keyFactory.getSensorId(key.key()),
+        .map((key, value) -> KeyValue.pair(
+            keyFactory.getSensorId(key.key()),
             statsRecordFactory.create(key, value)))
         // .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
         // TODO Publish

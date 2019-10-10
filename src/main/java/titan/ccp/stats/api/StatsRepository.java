@@ -45,8 +45,10 @@ public class StatsRepository<T extends SpecificRecord> {
     this.mapping = mapping;
 
     this.executor.scheduleAtFixedRate(
-        this::updateCurrentInterval, 0, // Call immediately the first time
-        WINDOW_UPDATE_RATE.toMillis(), TimeUnit.MILLISECONDS);
+        this::updateCurrentInterval,
+        0, // Call immediately the first time
+        WINDOW_UPDATE_RATE.toMillis(),
+        TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -66,11 +68,14 @@ public class StatsRepository<T extends SpecificRecord> {
    */
   public List<T> get(final String identifier, final Interval interval) {
     final Statement statement = QueryBuilder // NOPMD no close()
-        .select().all().from(this.mapping.getTableName())
+        .select()
+        .all()
+        .from(this.mapping.getTableName())
         .where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
         .and(QueryBuilder.eq(this.mapping.getPeriodStartColumn(),
             interval.getStart().toEpochMilli()))
-        .and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(), interval.getEnd().toEpochMilli()));
+        .and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(),
+            interval.getEnd().toEpochMilli()));
 
     return this.executeQuery(statement).stream().map(this.mapping.getMapper())
         .collect(Collectors.toList());
@@ -78,7 +83,7 @@ public class StatsRepository<T extends SpecificRecord> {
 
   /**
    * Get all intervals of the repository.
-   * 
+   *
    * @return the list of intervals
    */
   public List<Interval> getIntervals() {
@@ -92,7 +97,8 @@ public class StatsRepository<T extends SpecificRecord> {
                 .ofEpochMilli(record.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
             Instant
                 .ofEpochMilli(record.get(this.mapping.getPeriodEndColumn(), TypeCodec.bigint()))))
-        .distinct().sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
+        .distinct()
+        .sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
         .collect(Collectors.toList());
   }
 
@@ -101,22 +107,30 @@ public class StatsRepository<T extends SpecificRecord> {
     LOGGER.info("Updating the current interval.");
 
     final Statement statement = QueryBuilder // NOPMD no close()
-        .select(this.mapping.getIdentifierColumn(), this.mapping.getPeriodStartColumn(),
+        .select(
+            this.mapping.getIdentifierColumn(),
+            this.mapping.getPeriodStartColumn(),
             this.mapping.getPeriodEndColumn())
-        .distinct().from(this.mapping.getTableName());
+        .distinct()
+        .from(this.mapping.getTableName());
 
     this.currentInterval = this.executeQuery(statement).stream()
         .map(row -> Interval.of(
             Instant.ofEpochMilli(row.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
             Instant.ofEpochMilli(row.get(this.mapping.getPeriodEndColumn(), TypeCodec.bigint()))))
-        .distinct().sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
-        .filter(interval -> !interval.getEnd().isBefore(now)).findFirst()
+        .distinct()
+        .sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
+        .filter(interval -> !interval.getEnd().isBefore(now))
+        .findFirst()
         .orElse(this.currentInterval);
 
     if (this.currentInterval == null) {
       final long retryDelyinMs = WINDOW_UPDATE_RETRY_DELAY.toMillis();
       LOGGER.warn("No interval found so far. Retry in {} ms.", retryDelyinMs);
-      this.executor.schedule(this::updateCurrentInterval, retryDelyinMs, TimeUnit.MILLISECONDS);
+      this.executor.schedule(
+          this::updateCurrentInterval,
+          retryDelyinMs,
+          TimeUnit.MILLISECONDS);
     }
   }
 
