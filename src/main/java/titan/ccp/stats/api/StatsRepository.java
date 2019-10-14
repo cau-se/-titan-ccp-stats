@@ -77,7 +77,9 @@ public class StatsRepository<T extends SpecificRecord> {
         .and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(),
             interval.getEnd().toEpochMilli()));
 
-    return this.executeQuery(statement).stream().map(this.mapping.getMapper())
+    return this.executeQuery(statement)
+        .stream()
+        .map(this.mapping.getMapper())
         .collect(Collectors.toList());
   }
 
