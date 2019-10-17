@@ -3,28 +3,37 @@ package titan.ccp.stats.api;
 import static org.junit.Assert.assertEquals;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonPrimitive;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import org.junit.Before;
 import org.junit.Test;
 import titan.ccp.stats.api.util.InstantSerializer;
 
 public class InstantSerializerTest {
 
-  private final Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Instant.class, new InstantSerializer())
-      .create();
+  private Gson gson;
+
+  @Before
+  public void init() {
+    this.gson = new GsonBuilder()
+        .registerTypeAdapter(Instant.class, new InstantSerializer())
+        .create();
+  }
 
   @Test
-  public void test() {
-    final Instant instant = Instant.ofEpochMilli(1L);
+  public void testInstantSerializer() {
+    final String iso = "2019-10-17T13:47:16.439Z";
+
+    final TemporalAccessor accessor = DateTimeFormatter.ISO_DATE_TIME.parse(iso);
+
+    final Instant instant = Instant.from(accessor);
 
     final String serializedInstant = this.gson.toJson(instant);
 
-    final String expectedSerializedInstant =
-        new JsonPrimitive(DateTimeFormatter.ISO_INSTANT.format(instant)).toString();
+    final String expectedSerializedInstant = "\"" + iso + "\"";
 
-    assertEquals(serializedInstant, expectedSerializedInstant);
+    assertEquals(expectedSerializedInstant, serializedInstant);
   }
 
 }
