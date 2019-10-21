@@ -101,10 +101,11 @@ public class KafkaStreamsBuilder {
         "Kafka topic for aggregated active power records has not been set.");
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
-    final TopologyBuilder topologyBuilder = new TopologyBuilder(
-        this.cassandraSession,
-        this.activePowerTopic,
-        this.aggrActivePowerTopic);
+    final TopologyBuilder topologyBuilder =
+        new TopologyBuilder(
+            this.cassandraSession,
+            this.activePowerTopic,
+            this.aggrActivePowerTopic);
     topologyBuilder.addStat(
         new DayOfWeekKeyFactory(),
         DayOfWeekKeySerde.create(),

@@ -26,7 +26,8 @@ import titan.ccp.stats.streamprocessing.util.StatsFactory;
  */
 public class TopologyBuilder {
 
-  // private static final Logger LOGGER = LoggerFactory.getLogger(TopologyBuilder.class);
+  // private static final Logger LOGGER =
+  // LoggerFactory.getLogger(TopologyBuilder.class);
 
   private final ZoneId zone = ZoneId.of("Europe/Paris"); // TODO as parameter
   private final Serdes serdes = new Serdes("http://localhost:8081"); // TODO as parameter
@@ -56,8 +57,7 @@ public class TopologyBuilder {
   /**
    * Add a new statistics calculation step.
    */
-  public <K, R extends SpecificRecord> void addStat(
-      final StatsKeyFactory<K> keyFactory,
+  public <K, R extends SpecificRecord> void addStat(final StatsKeyFactory<K> keyFactory,
       final Serde<K> keySerde,
       final StatsRecordFactory<K, R> statsRecordFactory,
       final RecordDatabaseAdapter<R> recordDatabaseAdapter,
@@ -70,11 +70,9 @@ public class TopologyBuilder {
           final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
           final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
           return keyFactory.createKey(value.getIdentifier(), dateTime);
-        })
-        .groupByKey(Grouped.with(keySerde, this.serdes.activePower()))
+        }).groupByKey(Grouped.with(keySerde, this.serdes.activePower()))
         .windowedBy(timeWindows)
-        .aggregate(
-            () -> Stats.of(),
+        .aggregate(() -> Stats.of(),
             (k, record, stats) -> StatsFactory.accumulate(stats, record.getValueInW()),
             Materialized.with(keySerde, this.serdes.stats()))
         // TODO optional: group by timestamp -> reduce to forward only oldest window
@@ -84,7 +82,8 @@ public class TopologyBuilder {
             statsRecordFactory.create(key, value)))
         // .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
         // TODO Publish
-        // .through("my-topic", Produced.with(serdes.string(), serdes.windowedActivePowerValues()))
+        // .through("my-topic", Produced.with(serdes.string(),
+        // serdes.windowedActivePowerValues()))
         .foreach((k, record) -> this.cassandraWriter.write(record));
   }
 
@@ -94,11 +93,12 @@ public class TopologyBuilder {
 
   private KStream<String, ActivePowerRecord> buildRecordStream(final String activePowerTopic,
       final String aggrActivePowerTopic) {
-    final KStream<String, ActivePowerRecord> activePowerStream = this.builder
-        .stream(activePowerTopic, Consumed.with(this.serdes.string(), this.serdes.activePower()));
-    final KStream<String, ActivePowerRecord> aggrActivePowerStream = this.builder.stream(
-        aggrActivePowerTopic,
-        Consumed.with(this.serdes.string(), this.serdes.aggrActivePower()))
+    final KStream<String, ActivePowerRecord> activePowerStream =
+        this.builder.stream(activePowerTopic,
+            Consumed.with(this.serdes.string(), this.serdes.activePower()));
+    final KStream<String, ActivePowerRecord> aggrActivePowerStream = this.builder
+        .stream(aggrActivePowerTopic,
+            Consumed.with(this.serdes.string(), this.serdes.aggrActivePower()))
         .mapValues(aggr -> new ActivePowerRecord(aggr.getIdentifier(), aggr.getTimestamp(),
             aggr.getSumInW()));
     return activePowerStream.merge(aggrActivePowerStream);
