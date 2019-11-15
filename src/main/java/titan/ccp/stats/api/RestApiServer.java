@@ -10,8 +10,9 @@ import spark.Service;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 import titan.ccp.model.records.HourOfDayActivePowerRecord;
 import titan.ccp.model.records.HourOfWeekActivePowerRecord;
+import titan.ccp.stats.api.util.InstantSerializer;
 import titan.ccp.stats.api.util.Interval;
-
+import titan.ccp.stats.api.util.IntervalSerializer;
 
 /**
  * Contains a web server for accessing the stats via a REST interface.
@@ -21,7 +22,9 @@ public class RestApiServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RestApiServer.class);
 
-  private final Gson gson = new GsonBuilder().create();
+  private final Gson gson =
+      new GsonBuilder().registerTypeAdapter(Interval.class, new IntervalSerializer())
+          .registerTypeAdapter(Instant.class, new InstantSerializer()).create();
   private final StatsRepository<DayOfWeekActivePowerRecord> dayOfWeekRepository;
   private final StatsRepository<HourOfDayActivePowerRecord> hourOfDayRepository;
   private final StatsRepository<HourOfWeekActivePowerRecord> hourOfWeekRepository;
@@ -54,8 +57,7 @@ public class RestApiServer {
   private void enableCors() {
     this.webService.options("/*", (request, response) -> {
 
-      final String accessControlRequestHeaders =
-          request.headers("Access-Control-Request-Headers");
+      final String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
       if (accessControlRequestHeaders != null) {
         response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
       }
@@ -76,51 +78,59 @@ public class RestApiServer {
   private void instantiateRoutes() {
     LOGGER.info("Instantiate API routes.");
 
-    this.webService.get("/:sensorId/day-of-week", (request, response) -> {
+    this.webService.get("/sensor/:sensorId/day-of-week", (request, response) -> {
       final String sensorId = request.params("sensorId"); // NOCS
       final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
       final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
       if (intervalStartParam == null || intervalEndParam == null) {
         return this.dayOfWeekRepository.get(sensorId);
       } else {
-        final Interval interval = Interval.of(
-            Instant.parse(intervalStartParam),
+        final Interval interval = Interval.of(Instant.parse(intervalStartParam),
             Instant.parse(intervalEndParam));
         return this.dayOfWeekRepository.get(sensorId, interval);
       }
     }, this.gson::toJson);
 
-    this.webService.get("/:sensorId/hour-of-day", (request, response) -> {
+    this.webService.get("/sensor/:sensorId/hour-of-day", (request, response) -> {
       final String sensorId = request.params("sensorId"); // NOCS
       final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
       final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
       if (intervalStartParam == null || intervalEndParam == null) {
         return this.hourOfDayRepository.get(sensorId);
       } else {
-        final Interval interval = Interval.of(
-            Instant.parse(intervalStartParam),
+        final Interval interval = Interval.of(Instant.parse(intervalStartParam),
             Instant.parse(intervalEndParam));
         return this.hourOfDayRepository.get(sensorId, interval);
       }
     }, this.gson::toJson);
 
-    this.webService.get("/:sensorId/hour-of-week", (request, response) -> {
+    this.webService.get("/sensor/:sensorId/hour-of-week", (request, response) -> {
       final String sensorId = request.params("sensorId"); // NOCS
       final String intervalStartParam = request.queryParams("intervalStart"); // NOCS
       final String intervalEndParam = request.queryParams("intervalEnd"); // NOCS
       if (intervalStartParam == null || intervalEndParam == null) {
         return this.hourOfWeekRepository.get(sensorId);
       } else {
-        final Interval interval = Interval.of(
-            Instant.parse(intervalStartParam),
+        final Interval interval = Interval.of(Instant.parse(intervalStartParam),
             Instant.parse(intervalEndParam));
         return this.hourOfWeekRepository.get(sensorId, interval);
       }
+    }, this.gson::toJson);
+
+    this.webService.get("/interval/day-of-week", (request, response) -> {
+      return this.dayOfWeekRepository.getIntervals();
+    }, this.gson::toJson);
+
+    this.webService.get("/interval/hour-of-day", (request, response) -> {
+      return this.hourOfDayRepository.getIntervals();
+    }, this.gson::toJson);
+
+    this.webService.get("/interval/hour-of-week", (request, response) -> {
+      return this.hourOfWeekRepository.getIntervals();
     }, this.gson::toJson);
 
     this.webService.after((request, response) -> {
       response.type("application/json");
     });
   }
-
 }

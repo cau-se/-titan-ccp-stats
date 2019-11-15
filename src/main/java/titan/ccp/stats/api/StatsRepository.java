@@ -68,18 +68,39 @@ public class StatsRepository<T extends SpecificRecord> {
    */
   public List<T> get(final String identifier, final Interval interval) {
     final Statement statement = QueryBuilder // NOPMD no close()
-        .select().all()
+        .select()
+        .all()
         .from(this.mapping.getTableName())
         .where(QueryBuilder.eq(this.mapping.getIdentifierColumn(), identifier))
-        .and(QueryBuilder.eq(
-            this.mapping.getPeriodStartColumn(),
+        .and(QueryBuilder.eq(this.mapping.getPeriodStartColumn(),
             interval.getStart().toEpochMilli()))
-        .and(QueryBuilder.eq(
-            this.mapping.getPeriodEndColumn(),
+        .and(QueryBuilder.eq(this.mapping.getPeriodEndColumn(),
             interval.getEnd().toEpochMilli()));
 
-    return this.executeQuery(statement).stream()
+    return this.executeQuery(statement)
+        .stream()
         .map(this.mapping.getMapper())
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Get all intervals of the repository.
+   *
+   * @return the list of intervals
+   */
+  public List<Interval> getIntervals() {
+    final Statement statement = QueryBuilder
+        .select(this.mapping.getPeriodStartColumn(), this.mapping.getPeriodEndColumn())
+        .from(this.mapping.getTableName());
+
+    return this.executeQuery(statement).stream()
+        .map(record -> Interval.of(
+            Instant
+                .ofEpochMilli(record.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
+            Instant
+                .ofEpochMilli(record.get(this.mapping.getPeriodEndColumn(), TypeCodec.bigint()))))
+        .distinct()
+        .sorted((i1, i2) -> i1.getEnd().compareTo(i2.getEnd()))
         .collect(Collectors.toList());
   }
 
