@@ -9,6 +9,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import titan.ccp.common.kafka.streams.PropertiesBuilder;
 import titan.ccp.model.records.DayOfWeekActivePowerRecord;
 import titan.ccp.model.records.HourOfDayActivePowerRecord;
 import titan.ccp.model.records.HourOfWeekActivePowerRecord;
@@ -27,7 +28,7 @@ public class KafkaStreamsBuilder {
   private Session cassandraSession; // NOPMD
   private int numThreads = -1; // NOPMD
   private int commitIntervalMs = -1; // NOPMD
-  private int cacheMaxBytesBuffering = -1; // NOPMD
+  private int cacheMaxBytesBuff = -1; // NOPMD
 
   public KafkaStreamsBuilder bootstrapServers(final String bootstrapServers) {
     this.bootstrapServers = bootstrapServers;
@@ -83,7 +84,7 @@ public class KafkaStreamsBuilder {
     if (cacheMaxBytesBuffering < -1) {
       throw new IllegalArgumentException("Cache max bytes buffering must be greater or equal -1.");
     }
-    this.cacheMaxBytesBuffering = cacheMaxBytesBuffering;
+    this.cacheMaxBytesBuff = cacheMaxBytesBuffering;
     return this;
   }
 
@@ -129,16 +130,13 @@ public class KafkaStreamsBuilder {
   }
 
   private Properties buildProperties() {
-    Objects.requireNonNull(this.bootstrapServers, "Kafka bootstrap servers have not been set.");
-    final PropertiesBuilder properties = new PropertiesBuilder();
-    properties.set(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
-    properties.set(StreamsConfig.APPLICATION_ID_CONFIG,
-        APPLICATION_NAME + '-' + APPLICATION_VERSION); // TODO as parameter
-    properties.set(StreamsConfig.NUM_STREAM_THREADS_CONFIG, this.numThreads, p -> p > 0);
-    properties.set(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, this.commitIntervalMs, p -> p >= 0);
-    properties.set(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, this.cacheMaxBytesBuffering,
-        p -> p >= 0);
-    return properties.build();
+    return PropertiesBuilder
+        .bootstrapServers(this.bootstrapServers)
+        .applicationId(APPLICATION_NAME + '-' + APPLICATION_VERSION) // TODO as parameter
+        .set(StreamsConfig.NUM_STREAM_THREADS_CONFIG, this.numThreads, p -> p > 0)
+        .set(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, this.commitIntervalMs, p -> p >= 0)
+        .set(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, this.cacheMaxBytesBuff, p -> p >= 0)
+        .build();
   }
 
 }
