@@ -65,11 +65,11 @@ public class TopologyBuilder {
         .stream(activePowerTopic, Consumed.with(this.serdes.string(), this.serdes.activePower()));
     final KStream<String, ActivePowerRecord> aggrActivePowerStream =
         this.builder
-            .stream(aggrActivePowerTopic + "-avro",
+            .stream(aggrActivePowerTopic,
                 Consumed.with(this.serdes.string(),
                     this.serdes.aggregatedActivePowerRecordValues()))
-            .mapValues(aggr -> new ActivePowerRecord(aggr.getIdentifier(), aggr.getTimestamp(),
-                aggr.getSumInW()));
+            .mapValues(aggrAvro -> new ActivePowerRecord(aggrAvro.getIdentifier(), aggrAvro.getTimestamp(),
+                aggrAvro.getSumInW()));
     return activePowerStream.merge(aggrActivePowerStream);
   }
 
