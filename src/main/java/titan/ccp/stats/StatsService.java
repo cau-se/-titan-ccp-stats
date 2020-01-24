@@ -23,18 +23,21 @@ public class StatsService {
         .contactPoint(this.config.getString(ConfigurationKeys.CASSANDRA_HOST))
         .port(this.config.getInt(ConfigurationKeys.CASSANDRA_PORT))
         .keyspace(this.config.getString(ConfigurationKeys.CASSANDRA_KEYSPACE))
-        .timeoutInMillis(this.config.getInt(ConfigurationKeys.CASSANDRA_INIT_TIMEOUT_MS)).build();
+        .timeoutInMillis(this.config.getInt(ConfigurationKeys.CASSANDRA_INIT_TIMEOUT_MS))
+        .build();
 
-    final KafkaStreams kafkaStreams =
-        new KafkaStreamsBuilder().cassandraSession(clusterSession.getSession())
-            .bootstrapServers(this.config.getString(ConfigurationKeys.KAFKA_BOOTSTRAP_SERVERS))
-            .activePowerTopic(this.config.getString(ConfigurationKeys.KAFKA_TOPIC_ACTIVE_POWER))
-            .aggrActivePowerTopic(
-                this.config.getString(ConfigurationKeys.KAFKA_TOPIC_AGGR_ACTIVE_POWER))
-            .schemaRegistry(this.config.getString(ConfigurationKeys.SCHEMA_REGISTRY_URL)).build();
+    final KafkaStreams kafkaStreams = new KafkaStreamsBuilder()
+        .cassandraSession(clusterSession.getSession())
+        .bootstrapServers(this.config.getString(ConfigurationKeys.KAFKA_BOOTSTRAP_SERVERS))
+        .activePowerTopic(this.config.getString(ConfigurationKeys.KAFKA_TOPIC_ACTIVE_POWER))
+        .aggrActivePowerTopic(
+            this.config.getString(ConfigurationKeys.KAFKA_TOPIC_AGGR_ACTIVE_POWER))
+        .schemaRegistry(this.config.getString(ConfigurationKeys.SCHEMA_REGISTRY_URL))
+        .build();
     kafkaStreams.start();
 
-    final RestApiServer apiServer = new RestApiServer(clusterSession.getSession(),
+    final RestApiServer apiServer = new RestApiServer(
+        clusterSession.getSession(),
         this.config.getInt(ConfigurationKeys.WEBSERVER_PORT),
         this.config.getBoolean(ConfigurationKeys.WEBSERVER_CORS));
     apiServer.start();

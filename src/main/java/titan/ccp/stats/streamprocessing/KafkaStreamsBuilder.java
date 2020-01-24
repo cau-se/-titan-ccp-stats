@@ -108,26 +108,37 @@ public class KafkaStreamsBuilder {
         "Kafka topic for aggregated active power records has not been set.");
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
-    final TopologyBuilder topologyBuilder = new TopologyBuilder(new Serdes(this.schemaRegistryUrl),
-        this.cassandraSession, this.activePowerTopic, this.aggrActivePowerTopic);
-    topologyBuilder.addStat(new DayOfWeekKeyFactory(), DayOfWeekKeySerde.create(),
+    final TopologyBuilder topologyBuilder = new TopologyBuilder(
+        new Serdes(this.schemaRegistryUrl),
+        this.cassandraSession,
+        this.activePowerTopic,
+        this.aggrActivePowerTopic);
+    topologyBuilder.addStat(
+        new DayOfWeekKeyFactory(),
+        DayOfWeekKeySerde.create(),
         new DayOfWeekRecordFactory(),
         new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class, "dayOfWeek"), // NOCS
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
-    topologyBuilder.addStat(new HourOfDayKeyFactory(), HourOfDayKeySerde.create(),
+    topologyBuilder.addStat(
+        new HourOfDayKeyFactory(),
+        HourOfDayKeySerde.create(),
         new HourOfDayRecordFactory(),
         new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"), // NOCS
         TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1))); // NOCS
-    topologyBuilder.addStat(new HourOfWeekKeyFactory(), HourOfWeekKeySerde.create(),
+    topologyBuilder.addStat(
+        new HourOfWeekKeyFactory(),
+        HourOfWeekKeySerde.create(),
         new HourOfWeekRecordFactory(),
-        new RecordDatabaseAdapter<>(HourOfWeekActivePowerRecord.class,
+        new RecordDatabaseAdapter<>(
+            HourOfWeekActivePowerRecord.class,
             List.of("dayOfWeek", "hourOfDay")), // NOCS
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
     return topologyBuilder.build();
   }
 
   private Properties buildProperties() {
-    return PropertiesBuilder.bootstrapServers(this.bootstrapServers)
+    return PropertiesBuilder
+        .bootstrapServers(this.bootstrapServers)
         .applicationId(APPLICATION_NAME + '-' + APPLICATION_VERSION) // TODO as parameter
         .set(StreamsConfig.NUM_STREAM_THREADS_CONFIG, this.numThreads, p -> p > 0)
         .set(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, this.commitIntervalMs, p -> p >= 0)
