@@ -17,10 +17,10 @@ import titan.ccp.model.records.HourOfWeekActivePowerRecord;
 /**
  * Builder for the statistics {@link KafkaStreams} configuration.
  */
-public class KafkaStreamsBuilder {
+public class KafkaStreamsBuilder { // NOPMD Builder class
 
   private static final String APPLICATION_NAME = "titan-ccp-stats";
-  private static final String APPLICATION_VERSION = "0.0.1";
+  private static final String APPLICATION_VERSION = "0.0.2";
 
   private String bootstrapServers; // NOPMD
   private String activePowerTopic; // NOPMD
