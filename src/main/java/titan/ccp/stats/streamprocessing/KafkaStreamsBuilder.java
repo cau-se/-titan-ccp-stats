@@ -17,14 +17,15 @@ import titan.ccp.model.records.HourOfWeekActivePowerRecord;
 /**
  * Builder for the statistics {@link KafkaStreams} configuration.
  */
-public class KafkaStreamsBuilder {
+public class KafkaStreamsBuilder { // NOPMD Builder class
 
   private static final String APPLICATION_NAME = "titan-ccp-stats";
-  private static final String APPLICATION_VERSION = "0.0.1";
+  private static final String APPLICATION_VERSION = "0.0.2";
 
   private String bootstrapServers; // NOPMD
   private String activePowerTopic; // NOPMD
   private String aggrActivePowerTopic; // NOPMD
+  private String schemaRegistryUrl; // NOPMD
   private Session cassandraSession; // NOPMD
   private int numThreads = -1; // NOPMD
   private int commitIntervalMs = -1; // NOPMD
@@ -47,6 +48,11 @@ public class KafkaStreamsBuilder {
 
   public KafkaStreamsBuilder aggrActivePowerTopic(final String aggrActivePowerTopic) {
     this.aggrActivePowerTopic = aggrActivePowerTopic;
+    return this;
+  }
+
+  public KafkaStreamsBuilder schemaRegistry(final String url) {
+    this.schemaRegistryUrl = url;
     return this;
   }
 
@@ -102,11 +108,11 @@ public class KafkaStreamsBuilder {
         "Kafka topic for aggregated active power records has not been set.");
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
-    final TopologyBuilder topologyBuilder =
-        new TopologyBuilder(
-            this.cassandraSession,
-            this.activePowerTopic,
-            this.aggrActivePowerTopic);
+    final TopologyBuilder topologyBuilder = new TopologyBuilder(
+        new Serdes(this.schemaRegistryUrl),
+        this.cassandraSession,
+        this.activePowerTopic,
+        this.aggrActivePowerTopic);
     topologyBuilder.addStat(
         new DayOfWeekKeyFactory(),
         DayOfWeekKeySerde.create(),
@@ -123,7 +129,8 @@ public class KafkaStreamsBuilder {
         new HourOfWeekKeyFactory(),
         HourOfWeekKeySerde.create(),
         new HourOfWeekRecordFactory(),
-        new RecordDatabaseAdapter<>(HourOfWeekActivePowerRecord.class,
+        new RecordDatabaseAdapter<>(
+            HourOfWeekActivePowerRecord.class,
             List.of("dayOfWeek", "hourOfDay")), // NOCS
         TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
     return topologyBuilder.build();
