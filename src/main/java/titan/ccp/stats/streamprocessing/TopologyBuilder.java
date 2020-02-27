@@ -18,7 +18,7 @@ import org.apache.kafka.streams.kstream.TimeWindows;
 import titan.ccp.common.avro.cassandra.AvroDataAdapter;
 import titan.ccp.common.cassandra.CassandraWriter;
 import titan.ccp.common.cassandra.PredefinedTableNameMappers;
-import titan.ccp.models.records.ActivePowerRecord;
+import titan.ccp.model.records.ActivePowerRecord;
 import titan.ccp.stats.streamprocessing.util.StatsFactory;
 
 /**
@@ -98,11 +98,14 @@ public class TopologyBuilder {
 
     this.cassandraKeySelector.addRecordDatabaseAdapter(recordDatabaseAdapter);
 
-    this.recordStream.selectKey((key, value) -> {
-      final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
-      final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
-      return keyFactory.createKey(value.getIdentifier(), dateTime);
-    }).groupByKey(Grouped.with(keySerde, this.serdes.activePower())).windowedBy(timeWindows)
+    this.recordStream
+        .selectKey((key, value) -> {
+          final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
+          final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
+          return keyFactory.createKey(value.getIdentifier(), dateTime);
+        })
+        .groupByKey(Grouped.with(keySerde, this.serdes.activePowerRecordValues()))
+        .windowedBy(timeWindows)
         .aggregate(
             () -> Stats.of(),
             (k, record, stats) -> StatsFactory.accumulate(stats, record.getValueInW()),
