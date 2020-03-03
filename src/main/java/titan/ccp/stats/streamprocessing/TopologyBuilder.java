@@ -122,9 +122,6 @@ public class TopologyBuilder {
             statsRecordFactory.create(key, value)));
     // .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
 
-    // To vs Through
-    // https://stackoverflow.com/a/53112992
-
     recordStream.to(
         statsTopic,
         Produced.with(
@@ -132,14 +129,6 @@ public class TopologyBuilder {
             this.serdes.avroValues()));
 
     recordStream.foreach((k, record) -> this.cassandraWriter.write(record));
-
-    // Alternative
-    // recordStream.through(
-    // statsTopic,
-    // Produced.with(
-    // this.serdes.string(),
-    // this.serdes.avroValues()))
-    // .foreach((k, record) -> this.cassandraWriter.write(record));
 
   }
 
