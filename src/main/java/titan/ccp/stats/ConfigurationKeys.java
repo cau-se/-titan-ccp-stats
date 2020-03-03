@@ -25,6 +25,12 @@ public final class ConfigurationKeys {
 
   public static final String KAFKA_TOPIC_AGGR_ACTIVE_POWER = "kafka.topic.aggractivepower";
 
+  public static final String KAFKA_TOPIC_DAY_OF_WEEK_POWER = "kafka.topic.dayofweekpower";
+
+  public static final String KAFKA_TOPIC_HOUR_OF_DAY_POWER = "kafka.topic.hourofdaypower";
+
+  public static final String KAFKA_TOPIC_HOUR_OF_WEEK_POWER = "kafka.topic.hourofweekpower";
+
   public static final String NUM_THREADS = "num.threads";
 
   public static final String COMMIT_INTERVAL_MS = "commit.interval.ms";

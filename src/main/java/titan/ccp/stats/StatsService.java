@@ -4,7 +4,7 @@ import org.apache.commons.configuration2.Configuration;
 import org.apache.kafka.streams.KafkaStreams;
 import titan.ccp.common.cassandra.SessionBuilder;
 import titan.ccp.common.cassandra.SessionBuilder.ClusterSession;
-import titan.ccp.common.configuration.Configurations;
+import titan.ccp.common.configuration.ServiceConfiguration;
 import titan.ccp.stats.api.RestApiServer;
 import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
 
@@ -13,7 +13,8 @@ import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
  */
 public class StatsService {
 
-  private final Configuration config = Configurations.create();
+  // private final Configuration config = Configurations.create();
+  private final Configuration config = ServiceConfiguration.createWithDefaults();
 
   /**
    * Start the microservice.
@@ -32,6 +33,9 @@ public class StatsService {
         .activePowerTopic(this.config.getString(ConfigurationKeys.KAFKA_TOPIC_ACTIVE_POWER))
         .aggrActivePowerTopic(
             this.config.getString(ConfigurationKeys.KAFKA_TOPIC_AGGR_ACTIVE_POWER))
+        .dayOfWeekTopic(this.config.getString(ConfigurationKeys.KAFKA_TOPIC_DAY_OF_WEEK_POWER))
+        .hourOfDayTopic(this.config.getString(ConfigurationKeys.KAFKA_TOPIC_HOUR_OF_DAY_POWER))
+        .hourOfWeekTopic(this.config.getString(ConfigurationKeys.KAFKA_TOPIC_HOUR_OF_WEEK_POWER))
         .schemaRegistry(this.config.getString(ConfigurationKeys.SCHEMA_REGISTRY_URL))
         .build();
     kafkaStreams.start();
