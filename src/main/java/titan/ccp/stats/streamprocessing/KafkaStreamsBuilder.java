@@ -25,6 +25,9 @@ public class KafkaStreamsBuilder { // NOPMD Builder class
   private String bootstrapServers; // NOPMD
   private String activePowerTopic; // NOPMD
   private String aggrActivePowerTopic; // NOPMD
+  private String dayOfWeekTopic; // NOPMD
+  private String hourOfDayTopic; // NOPMD
+  private String hourOfWeekTopic; // NOPMD
   private String schemaRegistryUrl; // NOPMD
   private Session cassandraSession; // NOPMD
   private int numThreads = -1; // NOPMD
@@ -48,6 +51,21 @@ public class KafkaStreamsBuilder { // NOPMD Builder class
 
   public KafkaStreamsBuilder aggrActivePowerTopic(final String aggrActivePowerTopic) {
     this.aggrActivePowerTopic = aggrActivePowerTopic;
+    return this;
+  }
+
+  public KafkaStreamsBuilder dayOfWeekTopic(final String dayOfWeekTopic) {
+    this.dayOfWeekTopic = dayOfWeekTopic;
+    return this;
+  }
+
+  public KafkaStreamsBuilder hourOfDayTopic(final String hourOfDayTopic) {
+    this.hourOfDayTopic = hourOfDayTopic;
+    return this;
+  }
+
+  public KafkaStreamsBuilder hourOfWeekTopic(final String hourOfWeekTopic) {
+    this.hourOfWeekTopic = hourOfWeekTopic;
     return this;
   }
 
@@ -106,6 +124,12 @@ public class KafkaStreamsBuilder { // NOPMD Builder class
         "Kafka topic for active power records has not been set.");
     Objects.requireNonNull(this.aggrActivePowerTopic,
         "Kafka topic for aggregated active power records has not been set.");
+    Objects.requireNonNull(this.dayOfWeekTopic,
+        "Kafka topic for day of week active power records has not been set.");
+    Objects.requireNonNull(this.hourOfDayTopic,
+        "Kafka topic for hour of day active power records has not been set.");
+    Objects.requireNonNull(this.hourOfWeekTopic,
+        "Kafka topic for hour of week active power records has not been set.");
     Objects.requireNonNull(this.cassandraSession, "Cassandra session has not been set.");
     // TODO log parameters
     final TopologyBuilder topologyBuilder = new TopologyBuilder(
@@ -118,13 +142,15 @@ public class KafkaStreamsBuilder { // NOPMD Builder class
         DayOfWeekKeySerde.create(),
         new DayOfWeekRecordFactory(),
         new RecordDatabaseAdapter<>(DayOfWeekActivePowerRecord.class, "dayOfWeek"), // NOCS
-        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
+        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)), // NOCS
+        this.dayOfWeekTopic);
     topologyBuilder.addStat(
         new HourOfDayKeyFactory(),
         HourOfDayKeySerde.create(),
         new HourOfDayRecordFactory(),
         new RecordDatabaseAdapter<>(HourOfDayActivePowerRecord.class, "hourOfDay"), // NOCS
-        TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1))); // NOCS
+        TimeWindows.of(Duration.ofDays(30)).advanceBy(Duration.ofDays(1)), // NOCS
+        this.hourOfDayTopic);
     topologyBuilder.addStat(
         new HourOfWeekKeyFactory(),
         HourOfWeekKeySerde.create(),
@@ -132,7 +158,8 @@ public class KafkaStreamsBuilder { // NOPMD Builder class
         new RecordDatabaseAdapter<>(
             HourOfWeekActivePowerRecord.class,
             List.of("dayOfWeek", "hourOfDay")), // NOCS
-        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30))); // NOCS
+        TimeWindows.of(Duration.ofDays(365)).advanceBy(Duration.ofDays(30)), // NOCS
+        this.hourOfWeekTopic);
     return topologyBuilder.build();
   }
 
