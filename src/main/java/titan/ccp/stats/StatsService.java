@@ -4,7 +4,7 @@ import org.apache.commons.configuration2.Configuration;
 import org.apache.kafka.streams.KafkaStreams;
 import titan.ccp.common.cassandra.SessionBuilder;
 import titan.ccp.common.cassandra.SessionBuilder.ClusterSession;
-import titan.ccp.common.configuration.ServiceConfiguration;
+import titan.ccp.common.configuration.ServiceConfigurations;
 import titan.ccp.stats.api.RestApiServer;
 import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
 
@@ -13,8 +13,7 @@ import titan.ccp.stats.streamprocessing.KafkaStreamsBuilder;
  */
 public class StatsService {
 
-  // private final Configuration config = Configurations.create();
-  private final Configuration config = ServiceConfiguration.createWithDefaults();
+  private final Configuration config = ServiceConfigurations.createWithDefaults();
 
   /**
    * Start the microservice.
