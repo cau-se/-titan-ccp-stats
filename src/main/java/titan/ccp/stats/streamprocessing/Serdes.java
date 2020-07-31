@@ -5,6 +5,7 @@ import org.apache.avro.specific.SpecificRecord;
 import org.apache.kafka.common.serialization.Serde;
 import titan.ccp.common.kafka.GenericSerde;
 import titan.ccp.common.kafka.avro.SchemaRegistryAvroSerdeFactory;
+import titan.ccp.common.kafka.simpleserdes.SimpleSerdes;
 import titan.ccp.model.records.ActivePowerRecord;
 import titan.ccp.model.records.AggregatedActivePowerRecord;
 import titan.ccp.model.records.WindowedActivePowerRecord;
@@ -39,6 +40,10 @@ final class Serdes {
 
   public Serde<Stats> stats() {
     return GenericSerde.from(Stats::toByteArray, Stats::fromByteArray);
+  }
+
+  public Serde<SummaryStatistics> summaryStatistics() {
+    return SimpleSerdes.create(new SummaryStatisticsSerde());
   }
 
 

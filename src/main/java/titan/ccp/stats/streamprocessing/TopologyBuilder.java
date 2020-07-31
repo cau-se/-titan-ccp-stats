@@ -1,7 +1,6 @@
 package titan.ccp.stats.streamprocessing;
 
 import com.datastax.driver.core.Session;
-import com.google.common.math.Stats;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -16,11 +15,11 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.Windowed;
 import titan.ccp.common.avro.cassandra.AvroDataAdapter;
 import titan.ccp.common.cassandra.CassandraWriter;
 import titan.ccp.common.cassandra.PredefinedTableNameMappers;
 import titan.ccp.model.records.ActivePowerRecord;
-import titan.ccp.stats.streamprocessing.util.StatsFactory;
 
 /**
  * Builds Kafka Stream Topology for the Stats microservice.
@@ -102,8 +101,7 @@ public class TopologyBuilder {
 
     this.cassandraKeySelector.addRecordDatabaseAdapter(recordDatabaseAdapter);
 
-
-    final KStream<String, R> recordStream = this.recordStream
+    final KStream<Windowed<K>, SummaryStatistics> recordStream = this.recordStream
         .selectKey((key, value) -> {
           final Instant instant = Instant.ofEpochMilli(value.getTimestamp());
           final LocalDateTime dateTime = LocalDateTime.ofInstant(instant, this.zone);
@@ -112,23 +110,30 @@ public class TopologyBuilder {
         .groupByKey(Grouped.with(keySerde, this.serdes.activePowerRecordValues()))
         .windowedBy(timeWindows)
         .aggregate(
-            () -> Stats.of(),
-            (k, record, stats) -> StatsFactory.accumulate(stats, record.getValueInW()),
-            Materialized.with(keySerde, this.serdes.stats()))
-        // TODO optional: group by timestamp -> reduce to forward only oldest window
-        .toStream()
+            SummaryStatistics::new,
+            (k, record, stats) -> stats.add(record),
+            Materialized.with(keySerde, this.serdes.summaryStatistics()))
+        .toStream();
+
+
+    recordStream
+        // Only forward updates to the most complete window, i.e the earliest
+        .filter((k, v) -> v.getTimestamp() >= k.window().end() - timeWindows.advanceMs)
         .map((key, value) -> KeyValue.pair(
             keyFactory.getSensorId(key.key()),
-            statsRecordFactory.create(key, value)));
-    // .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
+            statsRecordFactory.create(key, value.getStats())))
+        .to(
+            statsTopic,
+            Produced.with(
+                this.serdes.string(),
+                this.serdes.avroValues()));
 
-    recordStream.to(
-        statsTopic,
-        Produced.with(
-            this.serdes.string(),
-            this.serdes.avroValues()));
-
-    recordStream.foreach((k, record) -> this.cassandraWriter.write(record));
+    recordStream
+        .map((key, value) -> KeyValue.pair(
+            keyFactory.getSensorId(key.key()),
+            statsRecordFactory.create(key, value.getStats())))
+        // .peek((k, v) -> LOGGER.info("{}: {}", k, v)) // TODO Temp logging
+        .foreach((k, record) -> this.cassandraWriter.write(record));
 
   }
 
