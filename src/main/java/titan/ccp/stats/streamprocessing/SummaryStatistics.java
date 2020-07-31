@@ -1,8 +1,8 @@
 package titan.ccp.stats.streamprocessing;
 
 import com.google.common.math.Stats;
+import com.google.common.math.StatsAccumulator;
 import titan.ccp.model.records.ActivePowerRecord;
-import titan.ccp.stats.streamprocessing.util.StatsFactory;
 
 public class SummaryStatistics { // TODO maybe rename class
 
@@ -29,7 +29,10 @@ public class SummaryStatistics { // TODO maybe rename class
   }
 
   public SummaryStatistics add(final ActivePowerRecord record) {
-    final Stats stats = StatsFactory.accumulate(this.stats, record.getValueInW());
+    final StatsAccumulator statsAccumulator = new StatsAccumulator();
+    statsAccumulator.addAll(this.stats);
+    statsAccumulator.add(record.getValueInW());
+    final Stats stats = statsAccumulator.snapshot();
     final long timestamp = record.getTimestamp();
     return new SummaryStatistics(stats, timestamp);
   }

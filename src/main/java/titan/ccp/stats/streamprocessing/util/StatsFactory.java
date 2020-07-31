@@ -6,6 +6,7 @@ import com.google.common.math.StatsAccumulator;
 /**
  * Factory methods for working with {@link Stats}.
  */
+@Deprecated
 public final class StatsFactory {
 
   private StatsFactory() {}
