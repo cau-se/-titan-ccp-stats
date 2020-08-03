@@ -8,9 +8,8 @@ import titan.ccp.common.kafka.avro.SchemaRegistryAvroSerdeFactory;
 import titan.ccp.common.kafka.simpleserdes.SimpleSerdes;
 import titan.ccp.model.records.ActivePowerRecord;
 import titan.ccp.model.records.AggregatedActivePowerRecord;
-import titan.ccp.model.records.WindowedActivePowerRecord;
 
-final class Serdes {
+class Serdes {
 
   private final SchemaRegistryAvroSerdeFactory avroSerdeFactory;
 
@@ -20,10 +19,6 @@ final class Serdes {
 
   public Serde<String> string() {
     return org.apache.kafka.common.serialization.Serdes.String();
-  }
-
-  public Serde<WindowedActivePowerRecord> windowedActivePowerValues() {
-    return this.avroSerdeFactory.forKeys();
   }
 
   public Serde<ActivePowerRecord> activePowerRecordValues() {
