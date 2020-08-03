@@ -4,6 +4,9 @@ import com.google.common.math.Stats;
 import com.google.common.math.StatsAccumulator;
 import titan.ccp.model.records.ActivePowerRecord;
 
+/**
+ * Class representing summary statistics associated with a timestamp indicating its creation.
+ */
 public class SummaryStatistics { // TODO maybe rename class
 
   private final Stats stats;
@@ -28,6 +31,9 @@ public class SummaryStatistics { // TODO maybe rename class
     return this.timestamp;
   }
 
+  /**
+   * Add an {@link ActivePowerRecord} to these {@link SummaryStatistics} by creating a new instance.
+   */
   public SummaryStatistics add(final ActivePowerRecord record) {
     final StatsAccumulator statsAccumulator = new StatsAccumulator();
     statsAccumulator.addAll(this.stats);

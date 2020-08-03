@@ -5,6 +5,9 @@ import titan.ccp.common.kafka.simpleserdes.BufferSerde;
 import titan.ccp.common.kafka.simpleserdes.ReadBuffer;
 import titan.ccp.common.kafka.simpleserdes.WriteBuffer;
 
+/**
+ * Simple serde ({@link BufferSerde}) for {@link SummaryStatistics}.
+ */
 public class SummaryStatisticsSerde implements BufferSerde<SummaryStatistics> {
 
   @Override
