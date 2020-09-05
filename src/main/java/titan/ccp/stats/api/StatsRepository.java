@@ -36,6 +36,7 @@ public class StatsRepository<T extends SpecificRecord> {
   private final TableRecordMapping<T> mapping;
 
   private volatile Interval currentInterval;
+  private volatile List<Interval> availableIntervals;
 
   /**
    * Create a new {@link StatsRepository}.
@@ -46,6 +47,12 @@ public class StatsRepository<T extends SpecificRecord> {
 
     this.executor.scheduleAtFixedRate(
         this::updateCurrentInterval,
+        0, // Call immediately the first time
+        WINDOW_UPDATE_RATE.toMillis(),
+        TimeUnit.MILLISECONDS);
+
+    this.executor.scheduleAtFixedRate(
+        this::updateIntervals,
         0, // Call immediately the first time
         WINDOW_UPDATE_RATE.toMillis(),
         TimeUnit.MILLISECONDS);
@@ -89,11 +96,20 @@ public class StatsRepository<T extends SpecificRecord> {
    * @return the list of intervals
    */
   public List<Interval> getIntervals() {
-    final Statement statement = QueryBuilder
+    // Copy ref to intervals for concurrent modification
+    final List<Interval> availableIntervals = this.availableIntervals;
+    if (availableIntervals == null) {
+      return List.of();
+    }
+    return availableIntervals;
+  }
+
+  private void updateIntervals() {
+    final Statement statement = QueryBuilder // NOPMD no close()
         .select(this.mapping.getPeriodStartColumn(), this.mapping.getPeriodEndColumn())
         .from(this.mapping.getTableName());
 
-    return this.executeQuery(statement).stream()
+    this.availableIntervals = this.executeQuery(statement).stream()
         .map(record -> Interval.of(
             Instant
                 .ofEpochMilli(record.get(this.mapping.getPeriodStartColumn(), TypeCodec.bigint())),
